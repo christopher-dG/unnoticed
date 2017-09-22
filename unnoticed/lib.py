@@ -5,6 +5,37 @@ from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
 
+##### Notifications #####
+
+# TODO: Check if square brackets work on Windows and Linux.
+if sys.platform in ["win32", "cygwin"]:
+    dbroot = "C:\\\\Program Files (x86)\\osu!\\"
+    import win10toast
+    notifier = win10toast.ToastNotifier()
+    def shownotif(msg):
+        notifier.show_toast("[Unnoticed]", msg)
+elif sys.platform == "darwin":
+    dbroot = "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/"
+    import pync
+    def shownotif(msg):
+        # Square brackets don't work.
+        pync.Notifier.notify(msg, title="Unnoticed")
+else:
+    dbroot = "./"  # TODO: Where will this go?
+    import notify2
+    notify2.init("[Unnoticed]")
+    def shownotif(msg):
+        notify2.Notification("[Unnoticed]", msg).show()
+
+def notify(msg):
+    """Show a desktop notification."""
+    print(msg)
+    try:
+        shownotif(msg)
+    except Exception as e:
+        print("Notification error: %s" % e)
+
+
 ##### Data models #####
 
 class Score:
@@ -37,10 +68,12 @@ class Score:
 
 def processdb(filename):
     """Return all new unranked scores."""
+    notify("Processing new scores...")
     scores = []
     f = open(filename, "rb")
     f.seek(4 + 4)  # Ignore the first two int fields.
     f.close()
+    sleep(1)  # Helps to make sure the notifications stay in order.
     return scores
 
 def readnum(f, n):
@@ -59,14 +92,13 @@ def readstring(f):
 
 
 def readuleb(f):
-    """Read and decode a ULEB12 number from f."""
-    # https://en.wikipedia.org/wiki/LEB128
-    n = 0;
-    shift = 0;
+    """Read and decode a ULEB128 number from f."""
+    # https://en.wikipedia.org/wiki/LEB128#Decode_unsigned_integer
+    n, shift = 0, 0;
     while True:
         byte = readnum(f, 1)
-        n |= (byte & 0x3f << shift)
-        if not (byte & 0x80):
+        n |= byte & 0x3f << shift
+        if not byte & 0x80:
             break
         shift += 7
     return n
@@ -76,7 +108,9 @@ def readuleb(f):
 
 def triggerlamdbda(scores):
     """Trigger a Lambda function to add new scores to the remote database."""
-    pass
+    notify("Uploading %d new scores..." % len(scores))
+    sleep(1)  # Helps to make sure the notifications stay in order.
+    notify("Done uploading new scores.")
 
 
 ##### Filesystem monitoring #####
@@ -90,37 +124,25 @@ class Handler(PatternMatchingEventHandler):
         self.ready = True
 
 
-def monitorloop(filename):
+def monitorloop(fn):
     """
-    Continually wait until filename is written to,
-    then trigger the rest of the script.
+    Continually wait until fn is written to,
+    then trigger the lambda function.
     """
-    print("Monitoring: %s" % filename)
-    handler = Handler(filename)
+    notify("Monitoring: %s" % fn)
+    handler = Handler(fn)
     observer = Observer()
-    observer.schedule(handler, dirname(filename))
+    observer.schedule(handler, dirname(fn))
     observer.start()
 
     try:
         while True:
             sleep(1)
             if handler.ready:
-                triggerlamdbda(processdb(filename))
+                sleep(3)  # We only want to run once per "batch" of writes.
+                triggerlamdbda(processdb(fn))
                 handler.ready = False
     except KeyboardInterrupt:
+        notify("Exiting.")
         observer.stop()
     observer.join()
-
-
-##### Utils #####
-
-def dbroot():
-    """Determine the directory containing the database file."""
-    # https://osu.ppy.sh/help/wiki/osu!_File_Formats/Db_(file_format)
-    if sys.platform in ["win32", "cygwin"]:
-        return "C:\\\\Program Files (x86)\osu!\\"
-    elif sys.platform == "darwin":
-        return "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/"
-    else:
-        # TODO: Where will it go on Linux?
-        return "./"

@@ -3,4 +3,7 @@
 import unnoticed
 
 if __name__ == "__main__":
-    unnoticed.monitorloop(unnoticed.dbroot() + "scores.db")
+    try:
+        unnoticed.monitorloop(unnoticed.dbroot + "scores.db")
+    except Exception as e:
+        unnoticed.notify("Error: %s\nPlease report this!" % e)
