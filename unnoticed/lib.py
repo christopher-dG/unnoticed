@@ -33,30 +33,80 @@ class Score:
         self.scoreid = d["scoreid"]  # Online score id.
 
 
+##### DB parsing #####
+
+def processdb(filename):
+    """Return all new unranked scores."""
+    scores = []
+    f = open(filename, "rb")
+    f.seek(4 + 4)  # Ignore the first two int fields.
+    f.close()
+    return scores
+
+def readnum(f, n):
+    """Read an n-byte integer from f."""
+    return int.from_bytes(f.read(n), "little")
+
+def readbool(f):
+    """Read a boolean from f."""
+    return bool(f.read(1))
+
+def readstring(f):
+    """Read a variable-length string from f."""
+    if not readnum(f, 1):
+        return ""
+    return f.read(readuleb(f)).decode("utf-8")
+
+
+def readuleb(f):
+    """Read and decode a ULEB12 number from f."""
+    # https://en.wikipedia.org/wiki/LEB128
+    n = 0;
+    shift = 0;
+    while True:
+        byte = readnum(f, 1)
+        n |= (byte & 0x3f << shift)
+        if not (byte & 0x80):
+            break
+        shift += 7
+    return n
+
+
+##### AWS functions #####
+
+def triggerlamdbda(scores):
+    """Trigger a Lambda function to add new scores to the remote database."""
+    pass
+
+
 ##### Filesystem monitoring #####
 
 class Handler(PatternMatchingEventHandler):
-    def __init__(self, pattern):
-        super(Handler, self).__init__(
-            patterns=[pattern],
-            ignore_directories=True,
-        )
+    def __init__(self, pat):
+        self.ready = False
+        super(Handler, self).__init__(patterns=[pat], ignore_directories=True)
 
     def on_modified(self, event):
-        print(event.src_path)
+        self.ready = True
 
 
 def monitorloop(filename):
-    """Wait until filename is written to."""
+    """
+    Continually wait until filename is written to,
+    then trigger the rest of the script.
+    """
     print("Monitoring: %s" % filename)
     handler = Handler(filename)
     observer = Observer()
     observer.schedule(handler, dirname(filename))
-
     observer.start()
+
     try:
         while True:
             sleep(1)
+            if handler.ready:
+                triggerlamdbda(processdb(filename))
+                handler.ready = False
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
