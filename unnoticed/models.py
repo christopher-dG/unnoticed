@@ -6,19 +6,20 @@ class Score:
         under "Individual score format":
         https://osu.ppy.sh/help/wiki/osu!_File_Formats/Db_(file_format)
         """
-        self.mode = d["mode"]  # 0 = Standard, 1 = Taiko, 2 = CRB, 3 = Mania.
-        self.version = d["version"]  # "Version of this score", yyyymmdd.
-        self.name = d["name"]  # Player's username.
-        self.md5 = d["md5"]  # Hash of the replay file.
-        self.n300 = d["n300"]  # Number of 300s.
-        self.n100 = d["n100"]  # Number of 100s, 150s, 100s, or 200s.
-        self.n50 = d["n50"]  # Number of 50s, NA, small fruits, 50s.
-        self.ngeki = d["ngeki"]  # Number of Gekis, NA, NA, Max 300s.
-        self.nkatu = d["nkatu"]  # Number of Katus, NA, NA, 100s.
-        self.nmisses = d["nmisses"]  # Number of misses.
-        self.score = d["score"]  # Total score.
-        self.combo = d["combo"]  # Maximum combo.
-        self.fc = d["fc"]  # Perfect combo (bool).
-        self.mods = d["mods"]  # https://github.com/ppy/osu-api/wiki#mods
-        self.time = d["time"]  # Timestamp of the play.
-        self.scoreid = d["scoreid"]  # Online score id.
+        self.mode = d["mode"]  # Int: 0: Standard, 1: Taiko, 2: CTB, 3: Mania.
+        self.date = d["date"]  # Int: "Version of this score", yyyymmdd.
+        self.md5 = d["md5"]  # String: Hash of the beatmap file.
+        self.player = d["player"]  # String: Player's username.
+        self.replay = d["replay"]  # String: Hash of the replay file.
+        self.n300 = d["n300"]  # Int: Number of 300s.
+        self.n100 = d["n100"]  # Int: Number of 100s/150s/100s/200s.
+        self.n50 = d["n50"]  # Int: Number of 50s/NA/small fruits/50s.
+        self.ngeki = d["ngeki"]  # Int: Number of Gekis/NA/NA/Max 300s.
+        self.nkatu = d["nkatu"]  # Int: Number of Katus/NA/NA/100s.
+        self.nmisses = d["nmisses"]  # Int: Number of misses.
+        self.score = d["score"]  # Int: Total score.
+        self.combo = d["combo"]  # Int: Maximum combo.
+        self.fc = d["fc"]  # Bool: Perfect combo.
+        self.mods = d["mods"]  # Int: https://github.com/ppy/osu-api/wiki#mods
+        self.timestamp = d["timestamp"]  # Int: Timestamp of the play(?).
+        self.id = d["id"]  # Int: Online score id.

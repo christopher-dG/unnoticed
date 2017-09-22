@@ -5,7 +5,7 @@ from watchdog.events import PatternMatchingEventHandler
 
 from .aws import triggerlamdbda
 from .parsing import processdb
-from .util import notify
+from .util import log, notify
 
 
 class Handler(PatternMatchingEventHandler):
@@ -14,6 +14,7 @@ class Handler(PatternMatchingEventHandler):
         super(Handler, self).__init__(patterns=[pat], ignore_directories=True)
 
     def on_modified(self, event):
+        log.debug("File was modified")
         self.ready = True
 
 
@@ -32,6 +33,7 @@ def monitorloop(fn):
         while True:
             sleep(1)
             if handler.ready:
+                log.debug("Reacting to handler ready")
                 sleep(3)  # We only want to run once per "batch" of writes.
                 triggerlamdbda(processdb(fn))
                 handler.ready = False

@@ -1,34 +1,39 @@
+import logging
 import sys
+import threading
+
+log = logging.getLogger()
+title = "[Unnoticed]"
 
 if sys.platform in ["win32", "cygwin"]:
     dbroot = "C:\\\\Program Files (x86)\\osu!\\"
     import win10toast
-    notifier = win10toast.ToastNotifier()
+    tn = win10toast.ToastNotifier()
 
     def shownotif(msg):
-        notifier.show_toast("[Unnoticed]", msg)
+        threading.Thread(target=tn.show_toast, args=[title, msg]).start()
 
 elif sys.platform == "darwin":
     dbroot = "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/"  # noqa
     import pync
 
     def shownotif(msg):
-        # Square brackets don't work.
-        pync.Notifier.notify(msg, title="Unnoticed")
+        # Square brackets don't work on MacOS.
+        pync.Notifier.notify(msg, title=title[1:-1])
 
 else:
     dbroot = "./"  # TODO: Where will this go?
     import notify2
-    notify2.init("[Unnoticed]")
+    notify2.init(title)
 
     def shownotif(msg):
-        notify2.Notification("[Unnoticed]", msg).show()
+        notify2.Notification(title, msg).show()
 
 
 def notify(msg):
     """Show a desktop notification."""
-    print(msg)
+    log.debug("Desktop notification: %s" % msg)
     try:
         shownotif(msg)
     except Exception as e:
-        print("Notification error: %s" % e)
+        log.error("Notification error: %s" % e)
