@@ -1,18 +1,21 @@
-from setuptools import setup
 import sys
+from setuptools import setup
+
+
+requires = ["boto3", "watchdog"]
 
 if sys.platform in ["win32", "cygwin"]:
-    notifier = "win10toast"
+    requires.append("win10toast")
 elif sys.platform == "darwin":
-    notifier = "pync"
+    requires.append("pync")
 else:
-    notifier = "notify2"
+    requires.extend(["notify2", "dbus-python"])
 
 setup(
     name="unnoticed",
     version="0.0.1",
     packages=["unnoticed"],
     scripts=["bin/unnoticed"],
-    install_requires=["boto3", "watchdog", notifier],
+    install_requires=requires,
     zip_safe=True,
 )
