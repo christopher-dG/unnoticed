@@ -29,7 +29,7 @@ def readuleb(f):
     n, shift = 0, 0
     while True:
         byte = readn(f, BYTE)
-        n |= byte & 0x3f << shift
+        n |= (byte & 0x7f) << shift
         if not byte & 0x80:
             break
         shift += 7
@@ -101,7 +101,6 @@ def scoresdb():
 
 def readbeatmap(f, v):
     """Read a single beatmap from f. v is the version datestamp."""
-    # TODO: Find bugs. This currently works 2/3 of the time.
     d = {}
     size = readn(f, INT)
     start = f.tell()
