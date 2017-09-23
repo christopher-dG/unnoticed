@@ -6,7 +6,7 @@ log = logging.getLogger()
 title = "[Unnoticed]"
 
 if sys.platform in ["win32", "cygwin"]:
-    dbroot = "C:\\\\Program Files (x86)\\osu!\\"
+    DBROOT = "C:\\\\Program Files (x86)\\osu!\\"
     import win10toast
     tn = win10toast.ToastNotifier()
 
@@ -14,7 +14,7 @@ if sys.platform in ["win32", "cygwin"]:
         threading.Thread(target=tn.show_toast, args=[title, msg]).start()
 
 elif sys.platform == "darwin":
-    dbroot = "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/"  # noqa
+    DBROOT = "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/"  # noqa
     import pync
 
     def shownotif(msg):
@@ -22,7 +22,7 @@ elif sys.platform == "darwin":
         pync.Notifier.notify(msg, title=title[1:-1])
 
 else:
-    dbroot = "./"  # TODO: Where will this go?
+    DBROOT = "./"  # TODO: Where will this go?
     import notify2
     notify2.init(title)
 

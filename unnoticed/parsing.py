@@ -1,17 +1,20 @@
+from os.path import join
 from time import sleep
 
-from .models import Score
-from .util import log, notify
+from .models import Beatmap, Score, DB
+from .util import DBROOT, log, notify
 
 
 BYTE = 1
 SHORT = 2
 INT = 4
+SINGLE = 4
 LONG = 8
+DOUBLE = 8
 
 
 def readn(f, n):
-    """Read an n-byte number from f."""
+    """Read an n-byte number (zero precision) from f."""
     return int.from_bytes(f.read(n), "little")
 
 
@@ -65,10 +68,11 @@ def readscore(f):
     return Score(d)
 
 
-def readbeatmap(f):
+def readscores(f):
     """Read all scores for a single beatmap from f."""
     md5 = readstring(f)
     nscores = readn(f, INT)
+
     log.debug("Parsing %d score(s) for beatmap %s" % (nscores, md5))
     scores = [readscore(f) for _ in range(nscores)]
     if not all(score.md5 == md5 for score in scores):
@@ -76,20 +80,96 @@ def readbeatmap(f):
     return {"md5": md5, "scores": scores}
 
 
-def processdb(filename):
-    """Return all scores as a list of dicts."""
+def scoresdb():
+    """Return all scores in scores.db as a lit of dicts: [{md5, [scores]}]."""
     # ~1.2s on my laptop for 2000 maps, 6000 scores.
-    notify("Processing new scores...")
+    notify("Processing scores...")
     sleep(1)  # Helps to make sure the notifications stay in order.
-    with open(filename, "rb") as f:
+    with open(join(DBROOT, "scores.db"), "rb") as f:
         v = readn(f, INT)
         log.debug("scores.db version: %d" % v)
         nmaps = readn(f, INT)
         log.debug("scores.db contains %d beatmaps" % nmaps)
-        scores = [readbeatmap(f) for _ in range(nmaps)]
+        scores = [readscores(f) for _ in range(nmaps)]
         if len(scores) != nmaps:
             log.warn(
                 "%d != %d: nmaps does not match number of parsed beatmaps" %
                 (nmaps, len(scores))
             )
     return scores
+
+
+def readbeatmap(f, v):
+    """Read a single beatmap from f. v is the version datestamp."""
+    # TODO: Find bugs. This currently works 2/3 of the time.
+    d = {}
+    size = readn(f, INT)
+    start = f.tell()
+    try:
+        d["artist"] = readstring(f)
+        readstring(f)
+        d["title"] = readstring(f)
+        readstring(f)
+        d["creator"] = readstring(f)
+        d["diff"] = readstring(f)
+        readstring(f)
+        d["md5"] = readstring(f)
+        readstring(f)
+        d["status"] = readn(f, BYTE)
+        readn(f, SHORT * 3)
+        readn(f, LONG)
+        if v < 20140609:
+            readn(f, BYTE * 4)
+        else:
+            readn(f, SINGLE * 4)
+        readn(f, DOUBLE)
+        if v >= 20140609:
+            for _ in range(4):
+                readn(f, 14 * readn(f, INT))
+        readn(f, INT * 3)
+        readn(f, 17 * readn(f, INT))
+        d["id"] = readn(f, INT)  # This seems to not always be correct.
+        readn(f, INT * 2)
+        readn(f, BYTE * 4)
+        readn(f, SHORT)
+        readn(f, SINGLE)
+        d["mode"] = readn(f, BYTE)
+    except Exception as e:
+        log.error("Failed to parse beatmap at position %d: %s", start, e)
+        return None
+    else:
+        return Beatmap(d)
+    finally:
+        f.seek(start + size)
+
+
+def osudb():
+    """Return a generator of beatmaps in osu!.db."""
+    notify("Processing beatmaps...")
+    with open(join(DBROOT, "osu!.db"), "rb") as f:
+        v = readn(f, INT)
+        readn(f, INT)
+        readbool(f)
+        readn(f, LONG)
+        readstring(f)
+        nmaps = readn(f, INT)
+        log.debug("Parsing %d beatmaps from osu!.db" % nmaps)
+        for _ in range(nmaps):
+            beatmap = readbeatmap(f, v)
+            if beatmap is not None:
+                yield beatmap
+
+
+def username():
+    """Get the player's username."""
+    with open(join(DBROOT, "osu!.db"), "rb") as f:
+        readn(f, INT)
+        readn(f, INT)
+        readbool(f)
+        readn(f, LONG)
+        return readstring(f)
+
+
+def builddb():
+    """Build the beatmap and score container."""
+    return DB(username(), list(osudb()), scoresdb())

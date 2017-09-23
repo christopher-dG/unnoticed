@@ -2,7 +2,7 @@ import logging
 import sys
 
 from .monitor import monitorloop  # noqa
-from .util import dbroot, notify  # noqa
+from .util import DBROOT, notify  # noqa
 
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.WARNING)

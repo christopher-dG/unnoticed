@@ -1,5 +1,6 @@
 **/__pycache__
 **/scores.db
+**/osu!.db
 *.egg-info
 /build
 /dist

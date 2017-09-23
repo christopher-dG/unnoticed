@@ -4,7 +4,7 @@ from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
 from .aws import triggerlamdbda
-from .parsing import processdb
+from .parsing import builddb
 from .util import log, notify
 
 
@@ -35,7 +35,7 @@ def monitorloop(fn):
             if handler.ready:
                 log.debug("Reacting to handler ready")
                 sleep(3)  # We only want to run once per "batch" of writes.
-                triggerlamdbda(processdb(fn))
+                triggerlamdbda(builddb())
                 handler.ready = False
     except KeyboardInterrupt:
         notify("Exiting.")
