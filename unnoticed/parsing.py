@@ -72,7 +72,6 @@ def readscores(f):
     """Read all scores for a single beatmap from f."""
     md5 = readstring(f)
     nscores = readn(f, INT)
-
     log.debug("Parsing %d score(s) for beatmap %s" % (nscores, md5))
     scores = [readscore(f) for _ in range(nscores)]
     if not all(score.md5 == md5 for score in scores):
@@ -96,7 +95,7 @@ def scoresdb():
                 "%d != %d: nmaps does not match number of parsed beatmaps" %
                 (nmaps, len(scores))
             )
-    return scores
+    return list(filter(lambda s: s["scores"], scores))
 
 
 def readbeatmap(f, v):
@@ -152,11 +151,10 @@ def osudb():
         readn(f, LONG)
         readstring(f)
         nmaps = readn(f, INT)
-        log.debug("Parsing %d beatmaps from osu!.db" % nmaps)
-        for _ in range(nmaps):
-            beatmap = readbeatmap(f, v)
-            if beatmap is not None:
-                yield beatmap
+        log.debug("osu!.db contains %d beatmaps" % nmaps)
+        return list(filter(
+            lambda b: b, [readbeatmap(f, v) for _ in range(nmaps)]
+        ))
 
 
 def username():
@@ -171,4 +169,4 @@ def username():
 
 def builddb():
     """Build the beatmap and score container."""
-    return DB(username(), list(osudb()), scoresdb())
+    return DB(username(), osudb(), scoresdb())

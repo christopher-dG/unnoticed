@@ -1,3 +1,5 @@
+import time
+
 from .util import log
 
 
@@ -9,7 +11,7 @@ class Beatmap:
         self.creator = d["creator"]  # String: Mapper name.
         self.diff = d["diff"]  # String: Diff name.
         self.md5 = d["md5"]  # String: File hash.
-        self.status = d["status"]  # Int: 4: ranked, 5: approved, 2: unranked.
+        self.status = d["status"]  # Int: 0-2 = unranked, 4-6 ranked, 7 loved.
         self.id = d["id"]  # Int: Beatmap ID.
         self.mode = d["mode"]  # Int: 0: Standard, 1: Taiko, 2: CTB, 3: Mania.
 
@@ -48,6 +50,7 @@ class DB:
         self.username = username
         self.beatmaps = beatmaps
         self.scores = scores
+        self.date = time.time()
 
     def md5map(self):
         """Return a dict mapping MD5 hashes to their beatmaps."""
@@ -55,13 +58,19 @@ class DB:
 
     def scoremap(self):
         """Return a dict mapping beatmaps to their scores."""
-        scoremap = {beatmap: [] for beatmap in self.beatmaps}
+        smap = {beatmap: [] for beatmap in self.unranked()}
         table = self.md5map()
+        misses = 0
         for score in self.scores:
             try:
-                scoremap[table[score["md5"]]].append(score)
+                if table[score["md5"]] in smap:
+                    smap[score["md5"]].extend(score["scores"])
+                else:
+                    smap[table[score["md5"]]] = score["scores"]
             except KeyError:
-                log().warn(
-                    "A score had md5 %s but no beatmap matched" % score["md5"]
-                )
-        return scoremap
+                misses += 1
+        log.debug("Ranked or otherwise invalid scores: %d" % misses)
+        return smap
+
+    def unranked(self):
+        return list(filter(lambda b: b.status in [0, 1, 2], self.beatmaps))

@@ -35,7 +35,7 @@ def monitorloop(fn):
             if handler.ready:
                 log.debug("Reacting to handler ready")
                 sleep(3)  # We only want to run once per "batch" of writes.
-                triggerlamdbda(builddb())
+                triggerlamdbda(builddb().scoremap())
                 handler.ready = False
     except KeyboardInterrupt:
         notify("Exiting.")
