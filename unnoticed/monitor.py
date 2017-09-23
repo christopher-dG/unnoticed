@@ -3,8 +3,6 @@ from time import sleep
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
-from .aws import triggerlamdbda
-from .parsing import builddb
 from .util import log, notify
 
 
@@ -19,10 +17,7 @@ class Handler(PatternMatchingEventHandler):
 
 
 def monitorloop(fn):
-    """
-    Continually wait until fn is written to,
-    then trigger the lambda function.
-    """
+    """Continually wait until fn is written to, then trigger some AWS work."""
     notify("Monitoring: %s" % fn)
     handler = Handler(fn)
     observer = Observer()
@@ -35,7 +30,7 @@ def monitorloop(fn):
             if handler.ready:
                 log.debug("Reacting to handler ready")
                 sleep(3)  # We only want to run once per "batch" of writes.
-                triggerlamdbda(builddb().scoremap())
+                # Do something with builddb().
                 handler.ready = False
     except KeyboardInterrupt:
         notify("Exiting.")
