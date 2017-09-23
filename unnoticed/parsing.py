@@ -76,11 +76,11 @@ def readscores(f):
     scores = [readscore(f) for _ in range(nscores)]
     if not all(score.md5 == md5 for score in scores):
         log.warn("At least one score for %s has a mismatched MD5" % md5)
-    return {"md5": md5, "scores": scores}
+    return scores
 
 
 def scoresdb():
-    """Return all scores in scores.db as a lit of dicts: [{md5, [scores]}]."""
+    """Return all scores in scores.db."""
     # ~1.2s on my laptop for 2000 maps, 6000 scores.
     notify("Processing scores...")
     sleep(1)  # Helps to make sure the notifications stay in order.
@@ -89,13 +89,10 @@ def scoresdb():
         log.debug("scores.db version: %d" % v)
         nmaps = readn(f, INT)
         log.debug("scores.db contains %d beatmaps" % nmaps)
-        scores = [readscores(f) for _ in range(nmaps)]
-        if len(scores) != nmaps:
-            log.warn(
-                "%d != %d: nmaps does not match number of parsed beatmaps" %
-                (nmaps, len(scores))
-            )
-    return list(filter(lambda s: s["scores"], scores))
+        scores = []
+        for _ in range(nmaps):
+            scores.extend(filter(lambda s: s, readscores(f)))
+    return scores
 
 
 def readbeatmap(f, v):

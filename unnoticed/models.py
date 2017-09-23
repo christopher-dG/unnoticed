@@ -1,4 +1,6 @@
+import json
 import time
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from .util import log
 
@@ -14,6 +16,18 @@ class Beatmap:
         self.status = d["status"]  # Int: 0-2 = unranked, 4-6 ranked, 7 loved.
         self.id = d["id"]  # Int: Beatmap ID.
         self.mode = d["mode"]  # Int: 0: Standard, 1: Taiko, 2: CTB, 3: Mania.
+
+    def serialize(self):
+        return {
+            "artist": self.artist,
+            "title": self.title,
+            "creator": self.creator,
+            "diff": self.diff,
+            "md5": self.md5,
+            "status": self.status,
+            "id": self.id,
+            "mode": self.mode,
+        }
 
 
 class Score:
@@ -42,35 +56,66 @@ class Score:
         self.timestamp = d["timestamp"]  # Int: Timestamp of the play(?).
         self.id = d["id"]  # Int: Online score id.
 
+    def serialize(self):
+        return {
+            "mode": self.mode,
+            "date": self.date,
+            "md5": self.md5,
+            "player": self.player,
+            "replay": self.replay,
+            "n300": self.n300,
+            "n100": self.n100,
+            "n50": self.n50,
+            "ngeku": self.ngeki,
+            "nkatu": self.nkatu,
+            "nmisses": self.nmisses,
+            "score": self.score,
+            "combo": self.combo,
+            "fc": self.fc,
+            "mods": self.mods,
+            "timestamp": self.timestamp,
+            "id": self.id,
+        }
+
 
 class DB:
-    """A collection of all of a user's beatmaps and their scores on them."""
+    """
+    A collection of all of a user's beatmaps and their scores on them.
+    Each beatmap is guaranteed to have at least one associated score, and
+    each score's beatmap is guaranteed to exist.
+    """
     def __init__(self, username, beatmaps, scores):
         """beatmaps is a list of Beatmaps, scores is a list of Scores."""
         self.username = username
-        self.beatmaps = beatmaps
-        self.scores = scores
-        self.date = time.time()
-
-    def md5map(self):
-        """Return a dict mapping MD5 hashes to their beatmaps."""
-        return {beatmap.md5: beatmap for beatmap in self.beatmaps}
+        self.dt = time.time()
+        # Get rid of ranked/loved maps.
+        unranked = [b for b in beatmaps if b.status in [0, 1, 2]]
+        diff = len(beatmaps) - len(unranked)
+        log.debug("Filtered out %d non-unranked beatmaps" % diff)
+        # Get rid of scores on filtered maps.
+        md5map = {b.md5: b for b in unranked}
+        self.scores = [s for s in scores if s.md5 in md5map]
+        diff = len(scores) - len(self.scores)
+        log.debug("Filtered out %d scores on non-unranked beatmaps" % diff)
+        # Get rid of beatmaps without any scores.
+        md5s = [s.md5 for s in self.scores]
+        self.beatmaps = [b for b in unranked if b.md5 in md5s]
+        diff = len(unranked) - len(self.beatmaps)
+        log.debug("Filtered out %d beatmaps without scores" % diff)
 
     def scoremap(self):
         """Return a dict mapping beatmaps to their scores."""
-        smap = {beatmap: [] for beatmap in self.unranked()}
-        table = self.md5map()
-        misses = 0
-        for score in self.scores:
-            try:
-                if table[score["md5"]] in smap:
-                    smap[score["md5"]].extend(score["scores"])
-                else:
-                    smap[table[score["md5"]]] = score["scores"]
-            except KeyError:
-                misses += 1
-        log.debug("Ranked or otherwise invalid scores: %d" % misses)
+        smap = {b: [] for b in self.beatmaps}
+        md5map = {b.md5: b for b in self.beatmaps}
+        for s in self.scores:
+            smap[md5map[s.md5]].append(s)
         return smap
 
-    def unranked(self):
-        return list(filter(lambda b: b.status in [0, 1, 2], self.beatmaps))
+    def serialize(self):
+        """Save the instance to a zipped JSON file."""
+        d = {"username": self.username, "dt": self.dt}
+        d["beatmaps"] = [b.serialize() for b in self.beatmaps]
+        d["scores"] = [s.serialize() for s in self.scores]
+        fn = "%d:%s" % (self.dt, self.username)
+        with ZipFile("%s.zip" % fn, "w", compression=ZIP_DEFLATED) as z:
+            z.writestr("%s.json" % fn, json.dumps(d))
