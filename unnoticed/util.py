@@ -1,6 +1,7 @@
 import logging
 import sys
 import threading
+from os.path import abspath
 
 log = logging.getLogger()
 title = "[Unnoticed]"
@@ -28,6 +29,8 @@ else:
 
     def shownotif(msg):
         notify2.Notification(title, msg).show()
+
+DBROOT = abspath(DBROOT)
 
 
 def notify(msg):
