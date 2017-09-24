@@ -86,7 +86,7 @@ class DB:
     def __init__(self, username, beatmaps, scores):
         """beatmaps is a list of Beatmaps, scores is a list of Scores."""
         self.username = username
-        self.dt = time.time()
+        self.dt = int(time.time())
         # Get rid of ranked/loved maps.
         unranked = [b for b in beatmaps if b.status in [0, 1, 2]]
         diff = len(beatmaps) - len(unranked)
@@ -112,9 +112,11 @@ class DB:
 
     def serialize(self):
         """Dump the DB to a JSON string."""
-        return json.dumps({
-            "username": self.username,
-            "dt": self.dt,
-            "beatmaps": [b.serialize() for b in self.beatmaps],
-            "scores": [s.serialize() for s in self.scores],
-        })
+        d = {"username": self.username, "dt": self.dt}
+        d["scores"] = {
+            b.md5: {"map": b.serialize(), "scores": []}
+            for b in self.beatmaps
+        }
+        for s in self.scores:
+            d["scores"][s.md5]["scores"].append(s.serialize())
+        return json.dumps(d)
