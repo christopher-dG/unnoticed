@@ -3,7 +3,9 @@
 import unnoticed
 
 if __name__ == "__main__":
+    unnoticed.util.log.info("Starting")
     try:
         unnoticed.monitorloop(unnoticed.DBROOT + "scores.db")
     except Exception as e:
         unnoticed.notify("Error: %s\nPlease report this!" % e)
+    unnoticed.util.log.info("Exiting")

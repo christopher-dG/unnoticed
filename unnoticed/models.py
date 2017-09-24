@@ -102,16 +102,21 @@ class DB:
         diff = len(unranked) - len(self.beatmaps)
         log.debug("Filtered out %d beatmaps without scores" % diff)
 
-    def scoremap(self):
-        """Return a dict mapping beatmaps to their scores."""
-        smap = {b: [] for b in self.beatmaps}
-        md5map = {b.md5: b for b in self.beatmaps}
-        for s in self.scores:
-            smap[md5map[s.md5]].append(s)
-        return smap
-
     def serialize(self):
-        """Dump the DB to a JSON string."""
+        """
+        Dump the DB to a JSON bytestring.
+        The resulting dict has this structure:
+        {
+            "username": string,
+            "dt": int,
+            "scores": [
+                md5: {
+                    "map": Beatmap,
+                    "scores": [Score]
+                }
+            ]
+        }
+        """
         d = {"username": self.username, "dt": self.dt}
         d["scores"] = {
             b.md5: {"map": b.serialize(), "scores": []}
@@ -119,4 +124,4 @@ class DB:
         }
         for s in self.scores:
             d["scores"][s.md5]["scores"].append(s.serialize())
-        return json.dumps(d)
+        return bytes(json.dumps(d), "utf-8")

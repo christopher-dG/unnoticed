@@ -3,6 +3,8 @@ from time import sleep
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
+from .s3 import upload
+from .parsing import builddb
 from .util import log, notify
 
 
@@ -30,7 +32,9 @@ def monitorloop(fn):
             if handler.ready:
                 log.debug("Reacting to handler ready")
                 sleep(3)  # We only want to run once per "batch" of writes.
-                # Do something with builddb().
+                db = builddb()
+                key = "%d:%s.json" % (db.dt, db.username)
+                upload(db.serialize(), key)
                 handler.ready = False
     except KeyboardInterrupt:
         notify("Exiting.")
