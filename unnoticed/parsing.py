@@ -61,7 +61,7 @@ def readscore(f):
     d["mods"] = readn(f, INT)
     readstring(f)
     d["timestamp"] = readn(f, LONG)
-    readn(f, INT)
+    f.seek(INT, 1)
     d["id"] = readn(f, LONG)
     return Score(d)
 
@@ -72,7 +72,7 @@ def readscores(f):
     nscores = readn(f, INT)
     log.debug("Parsing %d score(s) for beatmap %s" % (nscores, md5))
     scores = [readscore(f) for _ in range(nscores)]
-    if not all(score.md5 == md5 for score in scores):
+    if any(score.md5 != md5 for score in scores):
         log.warn("At least one score for %s has a mismatched MD5" % md5)
     return scores
 
@@ -107,23 +107,15 @@ def readbeatmap(f, v):
         d["md5"] = readstring(f)
         readstring(f)
         d["status"] = readn(f, BYTE)
-        readn(f, SHORT * 3)
-        readn(f, LONG)
-        if v < 20140609:
-            readn(f, BYTE * 4)
-        else:
-            readn(f, SINGLE * 4)
-        readn(f, DOUBLE)
+        f.seek(3 * SHORT + LONG, 1)
+        f.seek(4 * (BYTE if v < 20140609 else SINGLE) + DOUBLE, 1)
         if v >= 20140609:
             for _ in range(4):
-                readn(f, 14 * readn(f, INT))
-        readn(f, INT * 3)
-        readn(f, 17 * readn(f, INT))
+                f.seek(readn(f, INT) * 14, 1)
+        f.seek(3 * INT, 1)
+        f.seek(readn(f, INT) * 17, 1)
         d["id"] = readn(f, INT)  # This seems to not always be correct.
-        readn(f, INT * 2)
-        readn(f, BYTE * 4)
-        readn(f, SHORT)
-        readn(f, SINGLE)
+        f.seek(2 * INT + 4 * BYTE + SHORT + SINGLE, 1)
         d["mode"] = readn(f, BYTE)
     except Exception as e:
         log.error("Failed to parse beatmap at position %d: %s", start, e)
@@ -139,9 +131,8 @@ def osudb():
     # ~1.2 seconds on my laptop for 30000 maps.
     with open(join(DBROOT, "osu!.db"), "rb") as f:
         v = readn(f, INT)
-        readn(f, INT)
-        readbool(f)
-        readn(f, LONG)
+        log.debug("osu!.db version: %d" % v)
+        f.seek(INT + BYTE + LONG, 1)
         readstring(f)
         nmaps = readn(f, INT)
         log.debug("osu!.db contains %d beatmaps" % nmaps)
@@ -153,10 +144,7 @@ def osudb():
 def username():
     """Get the player's username."""
     with open(join(DBROOT, "osu!.db"), "rb") as f:
-        readn(f, INT)
-        readn(f, INT)
-        readbool(f)
-        readn(f, LONG)
+        f.seek(2 * INT + BYTE + LONG, 1)
         return readstring(f)
 
 
