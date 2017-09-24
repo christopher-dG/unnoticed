@@ -1,6 +1,5 @@
 import json
 import time
-from zipfile import ZipFile, ZIP_DEFLATED
 
 from .util import log
 
@@ -66,7 +65,7 @@ class Score:
             "n300": self.n300,
             "n100": self.n100,
             "n50": self.n50,
-            "ngeku": self.ngeki,
+            "ngeki": self.ngeki,
             "nkatu": self.nkatu,
             "nmisses": self.nmisses,
             "score": self.score,
@@ -112,10 +111,10 @@ class DB:
         return smap
 
     def serialize(self):
-        """Save the instance to a zipped JSON file."""
-        d = {"username": self.username, "dt": self.dt}
-        d["beatmaps"] = [b.serialize() for b in self.beatmaps]
-        d["scores"] = [s.serialize() for s in self.scores]
-        fn = "%d:%s" % (self.dt, self.username)
-        with ZipFile("%s.zip" % fn, "w", compression=ZIP_DEFLATED) as z:
-            z.writestr("%s.json" % fn, json.dumps(d))
+        """Dump the DB to a JSON string."""
+        return json.dumps({
+            "username": self.username,
+            "dt": self.dt,
+            "beatmaps": [b.serialize() for b in self.beatmaps],
+            "scores": [s.serialize() for s in self.scores],
+        })
