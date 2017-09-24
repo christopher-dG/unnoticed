@@ -1,9 +1,7 @@
 from os.path import join
-from time import sleep
 
 from .models import Beatmap, Score, DB
 from .util import DBROOT, log, notify
-
 
 BYTE = 1
 SHORT = 2
@@ -81,9 +79,8 @@ def readscores(f):
 
 def scoresdb():
     """Return all scores in scores.db."""
-    # ~1.2s on my laptop for 2000 maps, 6000 scores.
+    # ~0.2s on my laptop for 2000 maps, 6000 scores.
     notify("Processing scores...")
-    sleep(1)  # Helps to make sure the notifications stay in order.
     with open(join(DBROOT, "scores.db"), "rb") as f:
         v = readn(f, INT)
         log.debug("scores.db version: %d" % v)
@@ -140,6 +137,7 @@ def readbeatmap(f, v):
 
 def osudb():
     """Return a generator of beatmaps in osu!.db."""
+    # ~1.2 seconds on my laptop for 30000 maps.
     notify("Processing beatmaps...")
     with open(join(DBROOT, "osu!.db"), "rb") as f:
         v = readn(f, INT)
