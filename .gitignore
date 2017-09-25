@@ -3,6 +3,7 @@
 **/db.p
 **/unnoticed.log
 **/__pycache__
+*.pyc
 *.egg-info
 /build
 /dist

@@ -17,11 +17,13 @@ def upload(bs, key):
         aws_secret_access_key=sec,
     )
     try:
-        return client.put_object(
+        client.put_object(
             Body=bs,
             Bucket=b,
             Key=key,
         )
+        notify("Finished uploading new scores")
+        return True
     except Exception as e:
         notify("Uploading scores failed: %s" % e)
-        return None
+        return False
