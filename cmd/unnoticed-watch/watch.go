@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"path"
@@ -42,11 +41,13 @@ func main() {
 		unnoticed.Notify("Processing scores failed")
 		log.Fatal(err)
 	}
-	unnoticed.Notify("Finished processing")
+	unnoticed.Notify("Finished processing, uploading...")
 
-	out, err := json.Marshal(db)
+	resp, err := db.Upload()
 	if err != nil {
+		unnoticed.Notify("Upload failed")
 		log.Fatal(err)
 	}
-	log.Println(string(out))
+	unnoticed.Notify("Upload succeeded")
+	log.Println(resp)
 }

@@ -1,8 +1,11 @@
 package unnoticed
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -66,6 +69,31 @@ func (db *DB) MarshalJSON() ([]byte, error) {
 	self["scores"] = scoreMap
 
 	return json.Marshal(self)
+}
+
+// Upload posts the
+func (db *DB) Upload() (*http.Response, error) {
+	out, err := json.Marshal(db)
+	if err != nil {
+		return nil, err
+	}
+	hc := http.Client{}
+	req, err := http.NewRequest(
+		http.MethodPut,
+		"https://tcx6ldznwk.execute-api.us-east-1.amazonaws.com/unnoticed/upload",
+		bytes.NewReader(out),
+	)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := hc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, errors.New("Upload returned error code " + resp.Status)
+	}
+	return resp, err
 }
 
 // NewDB creates a new score database.
