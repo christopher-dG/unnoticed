@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Beatmap is an osu! beatmap.
 type Beatmap struct {
 	MD5    string `json:"md5"`  // Beatmap hash.
 	Status uint8  `json:"-"`    // Ranked status (0-2 = ranked).
@@ -16,6 +17,7 @@ type Beatmap struct {
 	Mode   uint8  `json:"mode"` // Game mode (0=STD, 1=Taiko, 2=CTB, 3=Mania).
 }
 
+// Score is a score on a particular beatmap.
 type Score struct {
 	Mode  uint8  `json:"mode"`  // Game mode (0=STD, 1=Taiko, 2=CTB, 3=Mania).
 	Date  uint32 `json:"date"`  // Date of the play (yyyymmdd).
@@ -33,6 +35,7 @@ type Score struct {
 	ID    uint64 `json:"id"`    // Online score ID.
 }
 
+// DB is a collection of unranked beatmaps and scores.
 type DB struct {
 	json.Marshaler
 	Username string     `json:"username"` // Player username.
@@ -71,7 +74,7 @@ func (db *DB) MarshalJSON() ([]byte, error) {
 	return json.Marshal(self)
 }
 
-// Upload posts the
+// Upload posts the scores database to an API endpoint.
 func (db *DB) Upload() (*http.Response, error) {
 	out, err := json.Marshal(db)
 	if err != nil {

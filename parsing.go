@@ -15,12 +15,14 @@ const (
 	DOUBLE = 8
 )
 
+// readByte reads a single byte from f.
 func readByte(f *os.File) (uint8, error) {
 	buf := make([]byte, BYTE)
 	_, err := f.Read(buf)
 	return buf[0], err
 }
 
+// readShort reads a 2-byte unsigned integer from f.
 func readShort(f *os.File) (uint16, error) {
 	buf := make([]byte, SHORT)
 	if _, err := f.Read(buf); err != nil {
@@ -29,6 +31,7 @@ func readShort(f *os.File) (uint16, error) {
 	return binary.LittleEndian.Uint16(buf), nil
 }
 
+// readInt reads a 4-byte unsigned integer from f.
 func readInt(f *os.File) (uint32, error) {
 	buf := make([]byte, INT)
 	if _, err := f.Read(buf); err != nil {
@@ -37,6 +40,7 @@ func readInt(f *os.File) (uint32, error) {
 	return binary.LittleEndian.Uint32(buf), nil
 }
 
+// readLong reads an 8-byte unsigned integer from f.
 func readLong(f *os.File) (uint64, error) {
 	buf := make([]byte, LONG)
 	if _, err := f.Read(buf); err != nil {
@@ -344,7 +348,7 @@ func scoresDB(fn string) ([]*Score, error) {
 	return scores, err
 }
 
-// BuildDB parses the osu!.db and scores.db files and builds an unranked score database.
+// BuildDB parses the osu!.db and scores.db files and builds a DB.
 func BuildDB(scoresPath, osuPath string) (*DB, error) {
 	db := new(DB)
 	scores, err := scoresDB(scoresPath)
