@@ -153,6 +153,7 @@ func readScore(f *os.File) (score *Score, err error) {
 		flag = true
 	}
 	score.ID, err = readLong(f)
+	score.Acc = accuracy(score)
 	return
 }
 

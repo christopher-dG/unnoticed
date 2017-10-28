@@ -42,3 +42,23 @@ func Notify(msg string) {
 func Notifyf(format string, a ...interface{}) {
 	Notify(fmt.Sprintf(format, a...))
 }
+
+// accuracy parses a score's accuracy in percent.
+func accuracy(score *Score) float64 {
+	acc := 0.0
+	switch score.Mode {
+	case 0: // Standard.
+		acc = float64(score.N300+score.N100/3+score.N50/6) /
+			float64(score.N300+score.N100+score.N50+score.NMiss)
+	case 1: // Taiko.
+		acc = float64(score.N300+score.N100/2) /
+			float64(score.N300+score.N100+score.NMiss)
+	case 2: // CTB.
+		acc = float64(score.N300+score.N100+score.N50) /
+			float64(score.N300+score.N100+score.N50+score.NKatu+score.NMiss)
+	case 3: // Mania.
+		acc = float64(score.NGeki+score.N300+2*score.NKatu/3+score.N100/3+score.N50/6) /
+			float64(score.NGeki+score.N300+score.NKatu+score.N100+score.N50+score.NMiss)
+	}
+	return 100 * acc
+}
