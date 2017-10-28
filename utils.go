@@ -11,8 +11,13 @@ import (
 )
 
 // OsuPath joins fn to the root osu! directory.
-func OsuPath(fn string) (filePath string, err error) {
+func OsuPath(fn string) (string, error) {
 	dbRoot := ""
+
+	if dbRoot = os.Getenv("OSU_ROOT"); len(dbRoot) > 0 {
+		return path.Join(dbRoot, fn), nil
+	}
+
 	switch runtime.GOOS {
 	case "windows":
 		dbRoot = "C:\\\\Program Files (x86)\\osu!\\"
@@ -21,9 +26,10 @@ func OsuPath(fn string) (filePath string, err error) {
 	default:
 		dbRoot = "./" // TODO: Where will this go?
 	}
-	filePath = path.Join(dbRoot, fn)
-	_, err = os.Stat(filePath)
-	return
+
+	filePath := path.Join(dbRoot, fn)
+	_, err := os.Stat(filePath)
+	return filePath, err
 }
 
 // Notify sends a desktop notification with the given string.

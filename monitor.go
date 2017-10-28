@@ -3,6 +3,7 @@ package unnoticed
 import (
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -23,10 +24,10 @@ func Watch(fn string) {
 	for {
 		select {
 		case event := <-watcher.Events:
+			// Wait a bit to make sure we don't process bursts of events.
+			time.Sleep(5 * time.Second)
 			log.Println(event)
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				return
-			}
+			return
 		case err := <-watcher.Errors:
 			log.Println(err)
 		}
