@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"time"
 
 	"github.com/christopher-dG/unnoticed"
 )
@@ -34,26 +33,23 @@ func main() {
 	}
 
 	for {
-		defer time.Sleep(5 * time.Second)
 		unnoticed.Notifyf("Monitoring %s", scoresPath)
 		unnoticed.Watch(scoresPath)
 
-		unnoticed.Notify("Processing beatmaps and scores")
 		db, err := unnoticed.BuildDB(scoresPath, osuPath)
 		if err != nil {
 			unnoticed.Notify("Processing scores failed")
 			log.Println(err)
 			continue
 		}
-		unnoticed.Notify("Finished processing, uploading...")
 
 		resp, err := db.Upload()
 		if err != nil {
-			unnoticed.Notify("Upload failed")
+			unnoticed.Notify("Uploading scores failed")
 			log.Println(err)
 			continue
 		}
-		unnoticed.Notify("Upload succeeded")
+		unnoticed.Notify("Uploading scores succeeded")
 		log.Println(resp)
 	}
 }

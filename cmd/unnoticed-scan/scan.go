@@ -32,19 +32,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	unnoticed.Notify("Processing beatmaps and scores")
 	db, err := unnoticed.BuildDB(scoresPath, osuPath)
 	if err != nil {
 		unnoticed.Notify("Processing scores failed")
 		log.Fatal(err)
 	}
-	unnoticed.Notify("Finished processing, uploading...")
 
 	resp, err := db.Upload()
 	if err != nil {
-		unnoticed.Notify("Upload failed")
+		unnoticed.Notify("Uploading scores failed")
 		log.Fatal(err)
 	}
-	unnoticed.Notify("Upload succeeded")
+	unnoticed.Notify("Uploading scores succeeded")
 	log.Println(resp)
 }
