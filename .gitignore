@@ -2,3 +2,4 @@
 **/osu!.db
 /bin-*
 /.bin-dir
+/.env
