@@ -2,8 +2,10 @@ package unnoticed
 
 import (
 	"encoding/binary"
+	"errors"
 	"log"
 	"os"
+	"time"
 )
 
 const (
@@ -98,63 +100,50 @@ func readScore(f *os.File) (score *Score, err error) {
 	// There's no size field so we'll avoid early returns, although it's
 	// unlikely that this will actually get us back on track.
 	flag := false
-	if score.Mode, err = readByte(f); err != nil {
-		flag = true
+	score.Mode, err = readByte(f)
+	flag = flag || err != nil
+	_, err = readInt(f)
+	score.MHash, err = readString(f)
+	flag = flag || err != nil
+	score.Name, err = readString(f)
+	flag = flag || err != nil
+	score.SHash, err = readString(f)
+	flag = flag || err != nil
+	score.N300, err = readShort(f)
+	flag = flag || err != nil
+	score.N100, err = readShort(f)
+	flag = flag || err != nil
+	score.N50, err = readShort(f)
+	flag = flag || err != nil
+	score.NGeki, err = readShort(f)
+	flag = flag || err != nil
+	score.NKatu, err = readShort(f)
+	flag = flag || err != nil
+	score.NMiss, err = readShort(f)
+	flag = flag || err != nil
+	score.Score, err = readInt(f)
+	flag = flag || err != nil
+	score.Combo, err = readShort(f)
+	flag = flag || err != nil
+	score.IsFC, err = readBool(f)
+	flag = flag || err != nil
+	score.Mods, err = readInt(f)
+	flag = flag || err != nil
+	_, err = readString(f) // This is supposedly always an empty string.
+	flag = flag || err != nil
+	ts, err := readLong(f)
+	flag = flag || err != nil
+	// https://stackoverflow.com/a/36120460/
+	score.Date = time.Unix(0, int64(((ts)-60*60*24*365*1970*10000000)*100)).Unix()
+	_, err = f.Seek(1*INT, 1) // This is supposedly always -1.
+	flag = flag || err != nil
+	_, err = readLong(f) // This is score ID, which is always 0 for unranked maps.
+	flag = flag || err != nil
+
+	if flag {
+		return nil, errors.New("score parsing error")
 	}
-	if score.Date, err = readInt(f); !flag && err != nil {
-		flag = true
-	}
-	if score.MD5, err = readString(f); !flag && err != nil {
-		flag = true
-	}
-	if _, err = readString(f); !flag && err != nil {
-		flag = true
-	}
-	if _, err = readString(f); !flag && err != nil {
-		flag = true
-	}
-	if score.N300, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.N100, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.N50, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.NGeki, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.NKatu, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.NMiss, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.Score, err = readInt(f); !flag && err != nil {
-		flag = true
-	}
-	if score.Combo, err = readShort(f); !flag && err != nil {
-		flag = true
-	}
-	if score.IsFC, err = readBool(f); !flag && err != nil {
-		flag = true
-	}
-	if score.Mods, err = readInt(f); !flag && err != nil {
-		flag = true
-	}
-	if _, err = readString(f); !flag && err != nil {
-		flag = true
-	}
-	if _, err := readLong(f); !flag && err != nil {
-		flag = true
-	}
-	if _, err = f.Seek(1*INT, 1); !flag && err != nil {
-		flag = true
-	}
-	score.ID, err = readLong(f)
-	score.Acc = accuracy(score)
-	return
+	return score, nil
 }
 
 // readScores reads all scores for one map.
@@ -178,8 +167,8 @@ func readScores(f *os.File) ([]*Score, error) {
 	}
 
 	for _, score := range scores {
-		if score.MD5 != md5 {
-			log.Printf("mismatched beatmap MD5: expected %s, got %s\n", md5, score.MD5)
+		if score.MHash != md5 {
+			log.Printf("mismatched beatmap MD5: expected %s, got %s\n", md5, score.MHash)
 		}
 	}
 
@@ -263,10 +252,10 @@ func readMap(f *os.File, v uint32) (*Beatmap, error) {
 	if beatmap.ID, err = readInt(f); err != nil {
 		return beatmap, err
 	}
-	if _, err = f.Seek(2*INT+4*BYTE+1*SHORT+1*SINGLE, 1); err != nil {
-		return beatmap, err
+	if beatmap.ID == 0 {
+		return beatmap, errors.New("beatmap id is 0")
 	}
-	beatmap.Mode, err = readByte(f)
+
 	return beatmap, err
 }
 
