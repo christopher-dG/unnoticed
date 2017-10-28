@@ -1,2 +1,4 @@
 **/scores.db
 **/osu!.db
+/bin-*
+/.bin-dir

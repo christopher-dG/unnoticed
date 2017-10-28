@@ -1,20 +1,9 @@
 language: go
-go:
-- 1.9
-branches:
-  only:
-  - master
-script: - go install -v ./...
-after_success:  # There must be a better way...
-  - git rm -rf .
-  - cp $GOPATH/bin/unnoticed-{scan,watch} ./
-  - mv unnoticed-scan unnoticed-scan-linux-64
-  - mv unnoticed-watch unnoticed-watch-linux-64
-  - git add unnoticed-*
-  - git commit -m 'Only include compiled binaries'
-deploy:
-  provider: s3
-  access_key_id: AKIAI6NAXGOYOZ6CAK4A
-  secret_access_key:
-    secure: wiWq3htVA4EysM1NtNTnQ7vOgSd0KyWiaRBsc6BYN2+Hj7KrcjKZjjg50uXtZUDpXHkg0/4fIPtT1Y/dAIiAPmm/QQfmbT7OB15/xFKsDFwcoNlqQy62QOFwtDx8/ThbPLc1jatgiYXOG07tVJ4jZxBWxeTXP5PL1jrFVC6LMg4fQGpsP8Pw7l/GwETdDZeU+zs75pXuLSqWtpKAh+S2ZHuSqaydn6vI043zSvBcKPGh5VLBD4j1Joo5GBVXSSjeS0RZSmKflNXbKLaEcylYHEZTg8SuLcIugnT+LVT3ClebtBdlIbMKvgUHESVf1Bb/GictUadBKNIUTkgccWr+c9Hs1e9CmtZOtFwZbrrRneYsbyRJf2yqDnoBNoe7J0MDUSEN+7QxdXU5dSlgUyf93iJoW94lEKukXo4OrVym2zlYpBXu86jW5L10BH3O1NGOpBiLo1F8K4skp+TotkatIQ1bbk8el5qgvgOVIj2pd/IijFhxZVWMHcIjiw5a+yR0hyICcu6C62HtsBqeJGpTxDVITDde4sVEct5MmAQ7+0JeDlYawrl2Pbxw2FzocPObMY+gwFP6/VPmuotaCb70pz24fTabkFM0deEap8J3gZ4v0dpnR7229v5hvJTzmR9hYzD0Qah1mNMDJGtII8coKTEMnJ3gK0th1RSD9MUOaZ4=
-  bucket: unnoticed-deploy
+go: 1.9
+notifications:
+  email: false
+addons:
+  apt:
+    packages: python3-pip
+script: ./bin/build.sh
+after_success: ./bin/deploy.sh
