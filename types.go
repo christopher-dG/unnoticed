@@ -16,22 +16,23 @@ type Beatmap struct {
 
 // Score is a score on a particular beatmap.
 type Score struct {
-	Mode  uint8  `json:"mode"`  // Game mode (0=STD, 1=Taiko, 2=CTB, 3=Mania).
-	MHash string `json:"mhash"` // Hash of the beatmap.
-	Name  string `json:"name"`  // Player username.
-	SHash string `json:"shash"` // Hash of the replay.
-	N300  uint16 `json:"n300"`  // Number of 300s.
-	N100  uint16 `json:"n100"`  // Number of 100s/150/100s/200s.
-	N50   uint16 `json:"n50"`   // Number of 50s/NA/small fruits/50s.
-	NGeki uint16 `json:"ngeki"` // Number of Gekis/NA/NA/Max 300s.
-	NKatu uint16 `json:"nkatu"` // Number of Katus/NA/NA/100s.
-	NMiss uint16 `json:"nmiss"` // Number of misses.
-	Score uint32 `json:"score"` // Total score.
-	Combo uint16 `json:"combo"` // Maximum combo.
-	IsFC  bool   `json:"fc"`    // Perfect combo.
-	Mods  uint32 `json:"mods"`  // Enabled mods: https://github.com/ppy/osu-api/wiki#mods.
-	Date  int64  `json:"date"`  // Unix timestamp of the play.
-	Map   uint32 `json:"map"`   // ID of the beatmap.
+	Mode   uint8  `json:"mode"`   // Game mode (0=STD, 1=Taiko, 2=CTB, 3=Mania).
+	Ver    uint32 `json:"ver"`    // Version of the score/replay.
+	MHash  string `json:"mhash"`  // Hash of the beatmap.
+	Player string `json:"player"` // Player username.
+	SHash  string `json:"shash"`  // Hash of the replay.
+	N300   uint16 `json:"n300"`   // Number of 300s.
+	N100   uint16 `json:"n100"`   // Number of 100s/150/100s/200s.
+	N50    uint16 `json:"n50"`    // Number of 50s/NA/small fruits/50s.
+	NGeki  uint16 `json:"ngeki"`  // Number of Gekis/NA/NA/Max 300s.
+	NKatu  uint16 `json:"nkatu"`  // Number of Katus/NA/NA/100s.
+	NMiss  uint16 `json:"nmiss"`  // Number of misses.
+	Score  uint32 `json:"score"`  // Total score.
+	Combo  uint16 `json:"combo"`  // Maximum combo.
+	FC     bool   `json:"fc"`     // Perfect combo.
+	Mods   uint32 `json:"mods"`   // https://github.com/ppy/osu-api/wiki#mods.
+	Date   int64  `json:"date"`   // Unix timestamp of the play.
+	Map    uint32 `json:"map"`    // ID of the beatmap.
 }
 
 // DB is a collection of unranked beatmaps and scores.

@@ -18,13 +18,13 @@ def process_map(msg)
   end
   # TODO: This gets all scores for the map rather than just the top 50.
   # Figure out a way to get around the weird distinct constraint.
-  ds = DB[:scores].where(:map => map_id).distinct(:name)
+  ds = DB[:scores].where(:map => map_id).distinct(:player)
   scores = ds.sort_by{|s| s[:score]}.reverse[0...50]
   map_line = map_string(map_id)
   table = Terminal::Table.new(:headings => ['Player', 'Score', 'Combo'])
 
   scores.each do |score|
-    table.add_row([score[:name], score[:score], "#{score[:combo]}x"])
+    table.add_row([score[:player], score[:score], "#{score[:combo]}x"])
   end
 
   return "#{map_line}\n```\n#{table}\n```"

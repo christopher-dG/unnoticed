@@ -100,10 +100,11 @@ func readScore(f *os.File) (score *Score, err error) {
 	flag := false
 	score.Mode, err = readByte(f)
 	flag = flag || err != nil
-	_, err = readInt(f)
+	score.Ver, err = readInt(f)
+	flag = flag || err != nil
 	score.MHash, err = readString(f)
 	flag = flag || err != nil
-	score.Name, err = readString(f)
+	score.Player, err = readString(f)
 	flag = flag || err != nil
 	score.SHash, err = readString(f)
 	flag = flag || err != nil
@@ -123,7 +124,7 @@ func readScore(f *os.File) (score *Score, err error) {
 	flag = flag || err != nil
 	score.Combo, err = readShort(f)
 	flag = flag || err != nil
-	score.IsFC, err = readBool(f)
+	score.FC, err = readBool(f)
 	flag = flag || err != nil
 	score.Mods, err = readInt(f)
 	flag = flag || err != nil

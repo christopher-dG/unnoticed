@@ -62,23 +62,23 @@ def handler(event, _):
         # Check the date so we can skip any already-uploaded plays.
         # Some scores appear to be missing the username. Ignore these so that
         # we don't accidentally credit someone with a score they didn't make.
-        if s["date"] < last_update or not s["name"]:
+        if s["date"] < last_update or not s["player"]:
             continue
 
         # Other player's scores appear here too, so if the name doesn't match,
         # set the ID to an impossible value. We can periodically clean up
         # scores with missing IDs seperately.
-        id_field = user_id if s["name"] == db["username"] else -1
+        id_field = user_id if s["player"] == db["username"] else -1
 
         tuples.append((
-            id_field, s["mode"], s["mhash"], s["name"], s["shash"], s["n300"],
-            s["n100"], s["n50"], s["ngeki"], s["nkatu"], s["nmiss"],
+            id_field, s["mode"], s["ver"], s["mhash"], s["player"], s["shash"],
+            s["n300"], s["n100"], s["n50"], s["ngeki"], s["nkatu"], s["nmiss"],
             s["score"], s["combo"], s["fc"], s["mods"], s["date"], s["map"],
         ))
 
     sql = """\
-    insert into scores (player_id, mode, mhash, name, shash, n300, n100, n50, \
-    ngeki, nkatu, nmiss, score, combo, fc, mods, date, map) values %s\
+    insert into scores (player_id, mode, ver, mhash, player, shash, n300, n100,
+    n50, ngeki, nkatu, nmiss, score, combo, fc, mods, date, map) values %s\
     """
 
     try:
@@ -112,7 +112,7 @@ def name_to_id(cur, name):
 
 
 def cleanup(conn, cur, resp, func):
-    """Undo changes to the DB."""
+    """Undo or commit changes to the DB."""
     func()
     cur.close()
     conn.close()
