@@ -17,16 +17,26 @@ playing.
 
 Leaderboards are accessible via the public
 [Discord server](https://discord.gg/8gbhTNA). To check a specific map's
-leaderboard, just paste its link into any channel (it should look like
+leaderboard, just paste its link into `#leaderboards` (it should look like
 `osu.ppy.sh/b/123`, and not `osu.ppy.sh/s/123`).
+
+## osu! Directory
+
+By default, your osu! database files (`scores.db` and `osu!.db`) are assumed to
+be in the following locations, dependent on your OS:
+
+* Windows: `C:\\Program Files (x86)\osu!\`
+* MacOS: `/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/`
+* Linux: `./` (whatever directory you run the executable in)
+
+If you keep your osu! directory somewhere else, you can set the `OSU_ROOT`
+environment variable to specify where it is.
 
 ## Log File
 
 If something goes wrong with processing and uploading your scores, it's a good
 idea to investigate the log file. Its location is dependent on your OS:
 
-* Windows: `C:\\Users\YourUsername\AppData\Local\Temp\unnoticed{scan,watch}.log`
-* MacOS: `$TMPDIR/unnoticed-{scan,watch}.log`
-* Linux: `/tmp/unnoticed-{scan,watch}.log`
-
-## osu! Directory
+* Windows: `C:\\Users\YourUsername\AppData\Local\Temp\osu-{scan,watch}.log`
+* MacOS: `$TMPDIR/osu-{scan,watch}.log`
+* Linux: `/tmp/osu-{scan,watch}.log`

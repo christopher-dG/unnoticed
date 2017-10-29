@@ -1,5 +1,5 @@
 **/scores.db
 **/osu!.db
-/bin-*
-/.bin-dir
-/.env
+**/bin-*
+**/.bin-dir
+**/.env

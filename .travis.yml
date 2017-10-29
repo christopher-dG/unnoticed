@@ -1,9 +1,15 @@
 language: go
 go: 1.9
+services: docker
 notifications:
   email: false
 addons:
   apt:
     packages: python3-pip
-script: ./bin/build.sh
-after_success: ./bin/deploy.sh
+env:
+  - STAGE=CLIENT
+  - STAGE=LAMBDA
+  - STAGE=DISCORD
+before_install: mv client/* ./ && rmdir client
+script: ./.travis/build.sh
+after_success: ./.travis/deploy.sh

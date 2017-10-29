@@ -1,3 +1,4 @@
 *
 !.gitignore
 !handler.py
+!requirements.txt
