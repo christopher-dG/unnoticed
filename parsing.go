@@ -215,7 +215,7 @@ func readMap(f *os.File, v uint32) (*Beatmap, error) {
 	if _, err = readString(f); err != nil {
 		return beatmap, err
 	}
-	if beatmap.Status, err = readByte(f); err != nil {
+	if _, err = readByte(f); err != nil {
 		return beatmap, err
 	}
 	if _, err = f.Seek(3*SHORT+1*LONG, 1); err != nil {

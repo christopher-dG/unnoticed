@@ -9,9 +9,8 @@ import (
 
 // Beatmap is an osu! beatmap.
 type Beatmap struct {
-	MD5    string `json:"md5"` // Beatmap hash.
-	Status uint8  `json:"-"`   // Ranked status (0-2 = ranked).
-	ID     uint32 `json:"id"`  // Map ID.
+	MD5 string `json:"md5"` // Beatmap hash.
+	ID  uint32 `json:"id"`  // Map ID.
 }
 
 // Score is a score on a particular beatmap.
