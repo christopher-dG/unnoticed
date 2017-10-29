@@ -1,7 +1,6 @@
 package unnoticed
 
 import (
-	"log"
 	"path/filepath"
 	"time"
 
@@ -12,12 +11,11 @@ import (
 func Watch(fn string) {
 	fn, err := filepath.Abs(fn)
 	if err != nil {
-		log.Println(err)
+		LogMsg(err)
 	}
-	log.Println(fn)
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatalf("couldn't get a watcher for %s", fn)
+		LogFatalf("couldn't get a watcher for %s", fn)
 	}
 	watcher.Add(fn)
 	defer watcher.Close()
@@ -26,10 +24,10 @@ func Watch(fn string) {
 		case event := <-watcher.Events:
 			// Wait a bit to make sure we don't process bursts of events.
 			time.Sleep(5 * time.Second)
-			log.Println(event)
+			LogMsgf("monitor event: %s", event)
 			return
 		case err := <-watcher.Errors:
-			log.Println(err)
+			LogMsgf("monitor error: %s", err)
 		}
 	}
 }

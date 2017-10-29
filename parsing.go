@@ -3,7 +3,6 @@ package unnoticed
 import (
 	"encoding/binary"
 	"errors"
-	"log"
 	"os"
 )
 
@@ -160,7 +159,7 @@ func readScores(f *os.File) ([]*Score, error) {
 
 	for i := uint32(1); i <= nScores; i++ {
 		if score, err := readScore(f); err != nil {
-			log.Printf("score %d: %s\n", i, err)
+			LogMsgf("score %d: %s", i, err)
 		} else {
 			scores = append(scores, score)
 		}
@@ -168,7 +167,7 @@ func readScores(f *os.File) ([]*Score, error) {
 
 	for _, score := range scores {
 		if score.MHash != md5 {
-			log.Printf("mismatched beatmap MD5: expected %s, got %s\n", md5, score.MHash)
+			LogMsgf("mismatched beatmap MD5: expected %s, got %s", md5, score.MHash)
 		}
 	}
 
@@ -274,7 +273,7 @@ func osuDB(fn string) (string, []*Beatmap, error) {
 	if err != nil {
 		return username, beatmaps, err
 	}
-	log.Printf("osu!.db version: %d\n", v)
+	LogMsgf("osu!.db version: %d", v)
 
 	if _, err = f.Seek(1*INT+1*BYTE+1*LONG, 1); err != nil {
 		return username, beatmaps, err
@@ -283,23 +282,23 @@ func osuDB(fn string) (string, []*Beatmap, error) {
 	if username, err = readString(f); err != nil {
 		return username, beatmaps, err
 	}
-	log.Printf("username: %s\n", username)
+	LogMsgf("username: %s", username)
 
 	nMaps, err := readInt(f)
 	if err != nil {
 		return username, beatmaps, err
 	}
-	log.Printf("osu.db contains %d beatmaps\n", nMaps)
+	LogMsgf("osu.db contains %d beatmaps", nMaps)
 
 	for i := 1; i <= int(nMaps); i++ {
 		if beatmap, err := readMap(f, v); err != nil {
-			log.Printf("map %d: %s\n", i, err)
+			LogMsgf("map %d: %s", i, err)
 		} else {
 			beatmaps = append(beatmaps, beatmap)
 		}
 	}
 
-	log.Printf("parsed %d/%d beatmaps\n", len(beatmaps), nMaps)
+	LogMsgf("parsed %d/%d beatmaps", len(beatmaps), nMaps)
 	return username, beatmaps, err
 }
 
@@ -317,16 +316,16 @@ func scoresDB(fn string) ([]*Score, error) {
 	if err != nil {
 		return scores, err
 	}
-	log.Printf("scores.db version: %d\n", v)
+	LogMsgf("scores.db version: %d", v)
 	nMaps, err := readInt(f)
 	if err != nil {
 		return scores, err
 	}
-	log.Printf("scores.db contains %d beatmaps\n", nMaps)
+	LogMsgf("scores.db contains %d beatmaps", nMaps)
 
 	for i := uint32(1); i <= nMaps; i++ {
 		if mapScores, err := readScores(f); err != nil {
-			log.Printf("score %d: %s\n", err)
+			LogMsgf("score %d: %s", err)
 		} else {
 			for _, score := range mapScores {
 				scores = append(scores, score)
@@ -334,7 +333,7 @@ func scoresDB(fn string) ([]*Score, error) {
 		}
 	}
 
-	log.Printf("parsed %d scores for %d beatmaps\n", len(scores), nMaps)
+	LogMsgf("parsed %d scores for %d beatmaps", len(scores), nMaps)
 	return scores, err
 }
 

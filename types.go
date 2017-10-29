@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 )
 
@@ -57,7 +56,7 @@ func (db *DB) MarshalJSON() ([]byte, error) {
 			score.Map = val
 			scores = append(scores, score)
 		} else {
-			log.Printf("no beatmap matched %s\n", score.MHash)
+			LogMsgf("no beatmap matched %s", score.MHash)
 		}
 	}
 	self["scores"] = scores
@@ -109,8 +108,8 @@ func NewDB(username string, scores []*Score, beatmaps []*Beatmap) *DB {
 			}
 		}
 	}
-	log.Printf(
-		"pruned %d scores without matching beatmaps\n",
+	LogMsgf(
+		"pruned %d scores without matching beatmaps",
 		len(scores)-len(filteredScores),
 	)
 

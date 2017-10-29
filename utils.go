@@ -10,6 +10,12 @@ import (
 	"github.com/0xAX/notificator"
 )
 
+var (
+	printLogger *log.Logger = log.New(os.Stdout, log.Prefix(), log.Flags())
+	fileLogger  *log.Logger = nil
+	fileLogging bool        = false
+)
+
 // OsuPath joins fn to the root osu! directory.
 func OsuPath(fn string) (string, error) {
 	dbRoot := ""
@@ -34,17 +40,52 @@ func OsuPath(fn string) (string, error) {
 
 // Notify sends a desktop notification with the given string.
 func Notify(msg string) {
-	log.Println(msg)
+	LogMsg(msg)
 	notify := notificator.New(notificator.Options{
 		DefaultIcon: "",
 		AppName:     "Unnoticed",
 	})
 	if err := notify.Push("Unnoticed", msg, "", notificator.UR_NORMAL); err != nil {
-		log.Printf("sending desktop notification failed: %s\n", err)
+		LogMsgf("sending desktop notification failed: %s", err)
 	}
 }
 
 // Notifyf sends a desktop notification with the given formatted string.
 func Notifyf(format string, a ...interface{}) {
 	Notify(fmt.Sprintf(format, a...))
+}
+
+// LogSetup tries sto set up file logging with with fn.
+func LogSetup(fn string) (*os.File, error) {
+	f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return nil, err
+	}
+	fileLogger = log.New(f, log.Prefix(), log.Flags())
+	fileLogging = true
+	return f, nil
+}
+
+// LogMsg logs a message.
+func LogMsg(msg interface{}) {
+	printLogger.Println(msg)
+	if fileLogging {
+		fileLogger.Println(msg)
+	}
+}
+
+// LogMsgf logs a formatted message.
+func LogMsgf(format string, a ...interface{}) {
+	LogMsg(fmt.Sprintf(format, a...))
+}
+
+// LoFatal logs a fatal error and exits.
+func LogFatal(msg interface{}) {
+	LogMsg(msg)
+	os.Exit(1)
+}
+
+// LogFatalf logs a formatted fatal error and exits.
+func LogFatalf(format string, a ...interface{}) {
+	LogFatal(fmt.Sprintf(format, a...))
 }
