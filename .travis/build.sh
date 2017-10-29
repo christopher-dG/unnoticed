@@ -12,28 +12,28 @@ case $STAGE in
 
         echo -e '\n========================= Linux 64-bit =========================\n'
         export GOOS=linux GOARCH=amd64
-        go build -v -o $DIR/$GOOS-$GOARCH-scan ./cmd/osu-scan
-        go build -v -o $DIR/$GOOS-$GOARCH-watch ./cmd/osu-watch
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-scan ./cmd/osu-scan
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-watch ./cmd/osu-watch
         echo -e '\n========================= Linux 32-bit =========================\n'
         export GOOS=linux GOARCH=386
-        go build -v -o $DIR/$GOOS-$GOARCH-scan ./cmd/osu-scan
-        go build -v -o $DIR/$GOOS-$GOARCH-watch ./cmd/osu-watch
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-scan ./cmd/osu-scan
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-watch ./cmd/osu-watch
         echo -e '\n======================== Windows 64-bit ========================\n'
         export GOOS=windows GOARCH=amd64
-        go build -v -o $DIR/$GOOS-$GOARCH-scan.exe ./cmd/osu-scan
-        go build -v -o $DIR/$GOOS-$GOARCH-watch.exe ./cmd/osu-watch
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-scan.exe ./cmd/osu-scan
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-watch.exe ./cmd/osu-watch
         echo -e '\n======================== Windows 32-bit ========================\n'
         export GOOS=windows GOARCH=386
-        go build -v -o $DIR/$GOOS-$GOARCH-scan.exe ./cmd/osu-scan
-        go build -v -o $DIR/$GOOS-$GOARCH-watch.exe ./cmd/osu-watch
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-scan.exe ./cmd/osu-scan
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-watch.exe ./cmd/osu-watch
         echo -e '\n========================= MacOS 64-bit =========================\n'
         export GOOS=darwin GOARCH=amd64
-        go build -v -o $DIR/$GOOS-$GOARCH-scan ./cmd/osu-scan
-        go build -v -o $DIR/$GOOS-$GOARCH-watch ./cmd/osu-watch
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-scan ./cmd/osu-scan
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-watch ./cmd/osu-watch
         echo -e '\n========================= MacOS 32-bit =========================\n'
         export GOOS=darwin GOARCH=386
-        go build -v -o $DIR/$GOOS-$GOARCH-scan ./cmd/osu-scan
-        go build -v -o $DIR/$GOOS-$GOARCH-watch ./cmd/osu-watch
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-scan ./cmd/osu-scan
+        go build -v -o $DIR/$GOOS-$GOARCH-osu-watch ./cmd/osu-watch
 
         echo $DIR > .bin-dir
         ;;

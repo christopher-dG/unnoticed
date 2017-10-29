@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	logFile := path.Join(os.TempDir(), "unnoticed-watch.log")
+	logFile := path.Join(os.TempDir(), "osu-watch.log")
 	if f, err := unnoticed.LogSetup(logFile); err == nil {
 		defer f.Close()
 		unnoticed.LogMsgf("log file: %s", logFile)

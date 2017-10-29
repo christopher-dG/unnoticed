@@ -9,8 +9,8 @@ import (
 
 // Beatmap is an osu! beatmap.
 type Beatmap struct {
-	MD5 string `json:"md5"` // Beatmap hash.
-	ID  uint32 `json:"id"`  // Map ID.
+	MD5 string // Beatmap hash.
+	ID  uint32 // Map ID.
 }
 
 // Score is a score on a particular beatmap.
@@ -93,9 +93,6 @@ func (db *DB) Upload() (*http.Response, error) {
 func NewDB(username string, scores []*Score, beatmaps []*Beatmap) *DB {
 	db := new(DB)
 	db.Username = username
-	// Ideally we'd like to filter out non-unranked beatmaps here,
-	// but the ranked status values are not consistent so we'll post
-	// them all and let the frontend deal with that.
 	db.Beatmaps = beatmaps
 
 	filteredScores := []*Score{}
