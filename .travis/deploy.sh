@@ -27,7 +27,9 @@ case $STAGE in
 
     'LAMBDA' )
         [ -f lambda/pkg.zip ] || (echo 'lambda/pkg.zip does not exist' && exit 1)
-        aws lambda update-function-code --function-name unnoticedPutScores --zip-file fileb://lambda/pkg.zip
+        # aws lambda update-function-code --function-name unnoticedPutScores --zip-file fileb://lambda/pkg.zip
+        # Leave this disabled for now, it seems that psycopg2 being installed as an egg
+        # may be causing problems.
         ;;
 
     'DISCORD' )
