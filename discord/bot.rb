@@ -20,7 +20,7 @@ def process_map(msg)
     return nil
   end
 
-  map_line = map_string(map_id)
+  map_line, md5 = map_info(map_id)
   header = map_line.nil? ? '' : map_line
   header += " - https://osu.ppy.sh/b/#{map_id}" if should_add_url(msg)
 
@@ -35,10 +35,21 @@ def process_map(msg)
     table = Terminal::Table.new(
       :headings => ['#', 'Player', 'Score', 'Mods', 'Acc', 'Combo', 'Misses', 'Date'],
     )
+    missing = md5.nil?
+    outdated = false
     scores.each_with_index do |s, i|
+      # If the map hashes don't match up, then the map has been updated
+      # since the play was made and therefore the score is not reliable.
+      if not missing and s[:mhash] != md5
+        outdated = true
+        idx = "#{i + 1}*"
+      else
+        idx = i + 1
+      end
+
       table.add_row(
         [
-          i+1,
+          idx,
           s[:player],
           s[:score],
           mods(s[:mods]),
@@ -51,7 +62,16 @@ def process_map(msg)
     end
   end
 
-  return "#{header}\n```#{table}```"
+  if missing
+    warning = ' * The most recent version of the map could not be found; '
+    warning += 'any of these scores could be outdated/edited'
+  elsif outdated
+    warning = ' * This play was made on an outdated/edited version of the map'
+  else
+    warning = nil
+  end
+
+  return "#{header}\n```#{table}\n#{warning}```"
 end
 
 def should_add_url(msg) not (OLD_REGEX.match?(msg) and msg.include?('https://osu')) end
@@ -75,15 +95,17 @@ def mods(n)
   return "+#{order.select {|m| enabled.include?(m)}.join}"
 end
 
-def map_string(map_id)
+# Return a string with the map name, and the map file's MD5.
+def map_info(map_id)
   url = "https://osu.ppy.sh/api/get_beatmaps?k=#{ENV['OSU_API_KEY']}&b=#{map_id}"
   begin
     d = HTTParty.get(url).parsed_response[0]
   rescue => e
     puts("Fetching map #{map_id} failed: #{e}")
-    return nil
+    return nil, nil
   end
-  return "**#{d['artist']} - #{d['title']} [#{d['version']}]** by **#{d['creator']}**"
+  s = "**#{d['artist']} - #{d['title']} [#{d['version']}]** by **#{d['creator']}**"
+  return s, d['file_md5']
 end
 
 # https://osu.ppy.sh/help/wiki/Accuracy/

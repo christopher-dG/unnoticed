@@ -22,6 +22,7 @@ case $STAGE in
         [ -d $DIR ] || (echo "$DIR does not exist" && exit 1)
         echo -e '\n================== Client binary MD5s ==================\n'
         md5sum $DIR/*
+        echo -e '\n========================================================\n'
         aws s3 mv --recursive $DIR s3://unnoticed-deploy/$DIR
         ;;
 
