@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"time"
 )
 
 const (
@@ -133,8 +132,9 @@ func readScore(f *os.File) (score *Score, err error) {
 	flag = flag || err != nil
 	ts, err := readLong(f)
 	flag = flag || err != nil
-	// https://stackoverflow.com/a/36120460/
-	score.Date = time.Unix(0, int64(((ts)-60*60*24*365*1970*10000000)*100)).Unix()
+	// https://github.com/worldwidewat/TicksToDateTime/
+	// Windows ticks don't overflow a signed int for a veeeeeery long time.
+	score.Date = (int64(ts) - 621355968000000000) / 10000000
 	_, err = f.Seek(1*INT, 1) // This is supposedly always -1.
 	flag = flag || err != nil
 	_, err = readLong(f) // This is score ID, which is always 0 for unranked maps.
