@@ -20,13 +20,17 @@ def process_map(msg)
     return nil
   end
 
-  map_line, md5 = map_info(map_id)
-  header = map_line.nil? ? '' : map_line
+  map_dict = map_info(map_id)
+  header = map_dict.key?(:string) ? map_dict[:string] : ''
   header += " - https://osu.ppy.sh/b/#{map_id}" if should_add_url(msg)
 
   # TODO: This gets all scores for the map rather than just the top 25.
   # Figure out a way to get around the weird distinct constraint.
-  ds = DB[:scores].where(:map => map_id).distinct(:player)
+  if map_dict[:mode].nil?
+    ds = DB[:scores].where(:map => map_id).distinct(:player)
+  else
+    ds = DB[:scores].where(:map => map_id, :mode => map_dict[:mode]).distinct(:player)
+  end
   scores = ds.sort_by{|s| s[:score]}.reverse[0...25]
 
   if scores.empty?
@@ -35,12 +39,13 @@ def process_map(msg)
     table = Terminal::Table.new(
       :headings => ['#', 'Player', 'Score', 'Mods', 'Acc', 'Combo', 'Misses', 'Date'],
     )
-    missing = md5.nil?
+    missing = map_dict[:md5].nil?
     outdated = false
     scores.each_with_index do |s, i|
+      next if map_dict[:mode] != s[:mode]  # TODO: Let users specify the game mode.
       # If the map hashes don't match up, then the map has been updated
       # since the play was made and therefore the score is not reliable.
-      if not missing and s[:mhash] != md5
+      if not missing and s[:mhash] != map_dict[:md5]
         outdated = true
         idx = "#{i + 1}*"
       else
@@ -95,17 +100,17 @@ def mods(n)
   return "+#{order.select {|m| enabled.include?(m)}.join}"
 end
 
-# Return a string with the map name, and the map file's MD5.
+# Return a string with the map name, the game mode, and the map file's MD5.
 def map_info(map_id)
   url = "https://osu.ppy.sh/api/get_beatmaps?k=#{ENV['OSU_API_KEY']}&b=#{map_id}"
   begin
     d = HTTParty.get(url).parsed_response[0]
   rescue => e
     puts("Fetching map #{map_id} failed: #{e}")
-    return nil, nil
+    return {}
   end
   s = "**#{d['artist']} - #{d['title']} [#{d['version']}]** by **#{d['creator']}**"
-  return s, d['file_md5']
+  return {:string => s, :md5 => d['file_md5'], :mode => Integer(d['mode'])}
 end
 
 # https://osu.ppy.sh/help/wiki/Accuracy/

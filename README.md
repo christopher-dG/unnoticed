@@ -3,7 +3,8 @@
 [![Build Status](https://travis-ci.org/christopher-dG/unnoticed.svg?branch=master)](https://travis-ci.org/christopher-dG/unnoticed)
 [![Discord](https://img.shields.io/badge/Discord-[Unnoticed]-7289da.svg)](https://discord.gg/8gbhTNA)
 
-**Unranked leaderboards for [osu!](https://osu.ppy.sh/home).**
+**[Unnoticed] provides leaderboards for [osu!](https://osu.ppy.sh/home)
+beatmaps of any game mode and any ranked status.**
 
 ## Uploading Scores
 
@@ -18,7 +19,9 @@ playing.
 Leaderboards are accessible via the public
 [Discord server](https://discord.gg/8gbhTNA). To check a specific map's
 leaderboard, just paste its link into `#leaderboards` (it should look like
-`osu.ppy.sh/b/123`, and not `osu.ppy.sh/s/123`).
+`osu.ppy.sh/b/123`, and not `osu.ppy.sh/s/123`). While unranked maps are the
+intended use case, other scores are also recorded so you won't lose that
+awesome score you set on Haitai when it was still qualified.
 
 ## osu! Directory
 
@@ -40,3 +43,7 @@ idea to investigate the log file. Its location is dependent on your OS:
 * Windows: `C:\\Users\YourUsername\AppData\Local\Temp\osu-{scan,watch}.log`
 * MacOS: `$TMPDIR/osu-{scan,watch}.log`
 * Linux: `/tmp/osu-{scan,watch}.log`
+
+***
+
+This project is in no way affiliated with [osu!](https://osu.ppy.sh/home).
