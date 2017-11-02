@@ -1,7 +1,7 @@
 # [Unnoticed]
 
 [![Build Status](https://travis-ci.org/christopher-dG/unnoticed.svg?branch=master)](https://travis-ci.org/christopher-dG/unnoticed)
-[![Discord](https://img.shields.io/badge/Discord-[Unnoticed]-7289da.svg)](https://discord.gg/8gbhTNA)
+[![Discord](https://img.shields.io/badge/Discord-[Unnoticed]-7289da.svg)](https://discord.gg/F8GqFMF)
 
 **[Unnoticed] provides leaderboards for [osu!](https://osu.ppy.sh/home)
 beatmaps of any game mode and any ranked status.**
@@ -17,7 +17,7 @@ playing.
 ## Viewing Leaderboards
 
 Leaderboards are accessible via the public
-[Discord server](https://discord.gg/8gbhTNA). To check a specific map's
+[Discord server](https://discord.gg/F8GqFMF). To check a specific map's
 leaderboard, just paste its link into `#leaderboards` (it should look like
 `osu.ppy.sh/b/123`, and not `osu.ppy.sh/s/123`). While unranked maps are the
 intended use case, other scores are also recorded so you won't lose that
