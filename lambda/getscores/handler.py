@@ -49,7 +49,7 @@ def handler(event, _):
 
     sql = """\
     select player_id, mode, player, n300, n100, n50, ngeki, nkatu, nmiss, \
-    score, combo, fc, mods, date) from scores where map = %d
+    score, combo, fc, mods, date from scores where map = %d\
     """ % map_id
 
     cur.execute(sql)
@@ -68,5 +68,5 @@ def handler(event, _):
     body["error"] = ""
     response["body"] = json.dumps(body)
 
-    print("Returning %d scores for %d" % (response["nscores"], map_id))
+    print("Returning %d scores for %d" % (body["nscores"], map_id))
     return response

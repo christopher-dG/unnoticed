@@ -1,1 +1,1 @@
-psycopg2
+# https://github.com/jkehler/awslambda-psycopg2

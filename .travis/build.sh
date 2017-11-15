@@ -40,6 +40,14 @@ case $STAGE in
 
     'LAMBDA' )
         cd lambda
+        git clone https://github.com/jkehler/awslambda-psycopg2
+        cp -r awslambda-psycopg2/psycopg2-3.6 ./getscores/psycopg2
+        cp -r awslambda-psycopg2/psycopg2-3.6 ./putscores/psycopg2
+        rm -rf awslambda-psycopg2
+        cd getscores
+        pip3 install -r requirements.txt -t .
+        zip -r pkg.zip *
+        cd ../putscores
         pip3 install -r requirements.txt -t .
         zip -r pkg.zip *
         ;;
