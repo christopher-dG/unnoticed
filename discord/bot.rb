@@ -84,25 +84,25 @@ def should_add_url(msg) not (OLD_REGEX.match?(msg) and msg.include?('https://osu
 def mods(n)
   return 'None' if n == 0
   mods = {
-    1 << 0  => 'NF',  # 1         - NoFail
-    1 << 1  => 'EZ',  # 2         - Easy
-    1 << 2 =>  'NV',  # 4         - No Video, deprecated and unused for like 4 years
-    1 << 3  => 'HD',  # 8         - Hidden
-    1 << 4  => 'HR',  # 16        - HardRock
-    1 << 5  => 'SD',  # 32        - SuddenDeath
-    1 << 6  => 'DT',  # 64        - DoubleTime
-    1 << 7  => 'RX',  # 128       - Relax
-    1 << 8  => 'HT',  # 256       - HalfTime
-    1 << 9  => 'NC',  # 512       - Nightcore
-    1 << 10 => 'FL',  # 1024      - Flashlight
-    1 << 11 => 'AT',  # 2048      - Autoplay
-    1 << 12 => 'SO',  # 4096      - SpunOut
-    1 << 13 => 'AP',  # 8192      - AutoPilot, "Relax2"
-    1 << 14 => 'PF',  # 16384     - Perfect
-    1 << 29 => 'SV2', # 536870912 - ScoreV2
+    1 << 0  => :NF,   # 1         - NoFail
+    1 << 1  => :EZ,   # 2         - Easy
+    1 << 2  => :NV,   # 4         - No Video, deprecated and unused for like 4 years
+    1 << 3  => :HD,   # 8         - Hidden
+    1 << 4  => :HR,   # 16        - HardRock
+    1 << 5  => :SD,   # 32        - SuddenDeath
+    1 << 6  => :DT,   # 64        - DoubleTime
+    1 << 7  => :RX,   # 128       - Relax
+    1 << 8  => :HT,   # 256       - HalfTime
+    1 << 9  => :NC,   # 512       - Nightcore
+    1 << 10 => :FL,   # 1024      - Flashlight
+    1 << 11 => :AT,   # 2048      - Autoplay
+    1 << 12 => :SO,   # 4096      - SpunOut
+    1 << 13 => :AP,   # 8192      - AutoPilot, "Relax2"
+    1 << 14 => :PF,   # 16384     - Perfect
+    1 << 29 => :V2,   # 536870912 - ScoreV2
   }
 
-  order = ['EZ', 'HD', 'HT', 'DT', 'NC', 'HR', 'FL', 'NF', 'SD', 'PF', 'RL', 'SO', 'AP', 'AT', 'SV2']
+  order = [:EZ, :HD, :HT, :DT, :NC, :HR, :FL, :NF, :SD, :PF, :RL, :SO, :AP, :AT, :V2]
   enabled = []
   mods.keys.reverse.each do |mod|
     if mod <= n
