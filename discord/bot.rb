@@ -10,6 +10,7 @@ NEW_SAMPLE = 'https://osu.ppy.sh/beatmapsets/123#osu/123'
 OLD_REGEX = /osu.ppy.sh\/b\/([0-9]+)/
 NEW_REGEX = /osu.ppy.sh\/beatmapsets\/[0-9]+#[a-z]+\/([0-9]+)/
 
+# Reply to a message containing a beatmap link with a leaderboard table.
 def process_map(msg)
   if OLD_REGEX.match?(msg)
     map_id = Integer(OLD_REGEX.match(msg).captures[0])
@@ -65,6 +66,7 @@ def process_map(msg)
         ]
       )
     end
+    table.align_column(2, :right)  # Scores column.
   end
 
   if missing
@@ -79,30 +81,53 @@ def process_map(msg)
   return "#{header}\n```#{table}\n#{warning}```"
 end
 
+# Determine whether we should add the beatmap url to the reply
+# (owo bot doesn't use regexes and misses some patterns).
 def should_add_url(msg) not (OLD_REGEX.match?(msg) and msg.include?('https://osu')) end
 
+# Convert an integer n into a mod string (https://github.com/ppy/osu-api/wiki#mods).
 def mods(n)
   return 'None' if n == 0
   mods = {
-    1 << 0  => :NF,   # 1         - NoFail
-    1 << 1  => :EZ,   # 2         - Easy
-    1 << 2  => :NV,   # 4         - No Video, deprecated and unused for like 4 years
-    1 << 3  => :HD,   # 8         - Hidden
-    1 << 4  => :HR,   # 16        - HardRock
-    1 << 5  => :SD,   # 32        - SuddenDeath
-    1 << 6  => :DT,   # 64        - DoubleTime
-    1 << 7  => :RX,   # 128       - Relax
-    1 << 8  => :HT,   # 256       - HalfTime
-    1 << 9  => :NC,   # 512       - Nightcore
-    1 << 10 => :FL,   # 1024      - Flashlight
-    1 << 11 => :AT,   # 2048      - Autoplay
-    1 << 12 => :SO,   # 4096      - SpunOut
-    1 << 13 => :AP,   # 8192      - AutoPilot, "Relax2"
-    1 << 14 => :PF,   # 16384     - Perfect
-    1 << 29 => :V2,   # 536870912 - ScoreV2
+    1 << 0 => :NF,  # 1 - NoFail.
+    1 << 1 => :EZ,  # 2 - Easy.
+    1 << 2 => :NV,  # 4 - NoVideo (deprecated and unused).
+    1 << 3 => :HD,  # 8 - Hidden.
+    1 << 4 => :HR,  # 16 - HardRock.
+    1 << 5 => :SD,  # 32 - SuddenDeath.
+    1 << 6 => :DT,  # 64 - DoubleTime.
+    1 << 7 => :RX,  # 128 - Relax.
+    1 << 8 => :HT,  # 256 - HalfTime.
+    1 << 9 | 1 << 6  => :NC,  # 512 - Nightcore (DT is always set as well).
+    1 << 10 => :FL,  # 1024 - Flashlight.
+    1 << 11 => :AT,  # 2048 - AutoPlay.
+    1 << 12 => :SO,  # 4096 - SpunOut.
+    1 << 13 => :AP,  # 8192 - AutoPilot.
+    1 << 14 | 1 << 5 => :PF,  # 16384 - Perfect (SD is always set as well).
+    # Symbols can't start with digits, so much for consistency...
+    1 << 15 => '4K',  # 32768 - 4Key.
+    1 << 16 => '5K',  # 65536 - 5Key.
+    1 << 17 => '6K',  # 131072 - 6Key.
+    1 << 18 => '7K',  # 262144 - 7Key.
+    1 << 19 => '7K',  # 524288 - 8Key.
+    1 << 20 => :FI,  # 1048576 - FadeIn?
+    1 << 21 => :RN,  # 2097152 - Random?
+    1 << 22 => :LM,  # 4193404 - LastMod?
+    1 << 24 => '9K',  # 16777216 - 9Key.
+    1 << 25 => :TK,  # 33554432 - 10Key (styled TK to maintain two letters).
+    1 << 26 => '1K',  # 67108864 - 1Key.
+    1 << 27 => '3K',  # 134217728 - 3Key.
+    1 << 28 => '2K',  # 268435456 - 2Key.
+    1 << 29 => :V2,  # 536870912 - ScoreV2.
   }
 
-  order = [:EZ, :HD, :HT, :DT, :NC, :HR, :FL, :NF, :SD, :PF, :RL, :SO, :AP, :AT, :V2]
+  # Any mod not in this list will never be displayed, we can ignore weird stuff
+  # like FadeIn this way. Additionally, this list determines the order of the
+  # displayed mod string.
+  order = [
+    :EZ, :HD, :HT, :DT, :NC, :HR, :FL, :NF, :SD, :PF, :RL, :SO, :AP, :AT, :V2,
+    '1K', '2K', '3K', '4K', '5K', '6K', '7K', '8K', '9K', :TK,
+  ]
   enabled = []
   mods.keys.reverse.each do |mod|
     if mod <= n
@@ -127,7 +152,7 @@ def map_info(map_id)
   return {:string => s, :md5 => d['file_md5'], :mode => Integer(d['mode'])}
 end
 
-# https://osu.ppy.sh/help/wiki/Accuracy/
+# Calculate accuracy for a given score (https://osu.ppy.sh/help/wiki/Accuracy).
 def accuracy(s)
   if s[:mode] == 0  # Standard.
     acc = (s[:n300] + s[:n100]/3.0 + s[:n50]/6.0) /
