@@ -4,7 +4,7 @@ import psycopg2
 
 
 def handler(event, _):
-    body = {"error": "unknown server error", "nscores": 0, "scores": []}
+    body = {"error": "internal server error", "nscores": 0, "scores": []}
     response = {
         "isBase64Encoded": False,
         "statusCode": 500,
@@ -16,6 +16,7 @@ def handler(event, _):
         map_id = event["queryStringParameters"]["b"]
     except KeyError:
         print("Missing parameter b")
+        response["statusCode"] = 400
         body["error"] = "missing parameter b"
         response["body"] = json.dumps(body)
         return response
@@ -25,8 +26,11 @@ def handler(event, _):
     except ValueError:
         print("Invalid parameter b=%s" % map_id)
         body["error"] = "invalid value for b (need an integer)"
+        response["statusCode"] = 400
         response["body"] = json.dumps(body)
         return response
+
+    print("Processing %d" % map_id)
 
     try:
         conn = psycopg2.connect(
@@ -64,4 +68,5 @@ def handler(event, _):
     body["error"] = ""
     response["body"] = json.dumps(body)
 
+    print("Returning %d scores for %d" % (response["nscores"], map_id))
     return response
