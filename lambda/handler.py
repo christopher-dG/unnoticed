@@ -33,6 +33,7 @@ def handler(event, _):
 
     cur = conn.cursor()
 
+    print("Processing '%s'" % db["username"])
     result = name_to_id(cur, db["username"])
     if result is None:
         return cleanup(conn, cur, response, conn.rollback)

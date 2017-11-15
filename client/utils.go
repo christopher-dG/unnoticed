@@ -1,9 +1,11 @@
 package unnoticed
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"path"
 	"runtime"
 
@@ -16,26 +18,47 @@ var (
 	fileLogging bool        = false
 )
 
-// OsuPath joins fn to the root osu! directory.
-func OsuPath(fn string) (string, error) {
-	dbRoot := ""
-
-	if dbRoot = os.Getenv("OSU_ROOT"); len(dbRoot) > 0 {
-		return path.Join(dbRoot, fn), nil
+// OsuDir finds the root osu! directory where osu!.db and scores.db can be found.
+func OsuDir() (string, error) {
+	if dbRootEnv := os.Getenv("OSU_ROOT"); len(dbRootEnv) > 0 {
+		if _, err := os.Stat(path.Join(dbRootEnv, "osu!.db")); err != nil {
+			return "", errors.New(fmt.Sprintf("osu!.db was not found at %s", dbRootEnv))
+		}
+		if _, err := os.Stat(path.Join(dbRootEnv, "scores.db")); err != nil {
+			return "", errors.New(fmt.Sprintf("scores.db was not found at %s", dbRootEnv))
+		}
+		return dbRootEnv, nil
 	}
 
+	dbRoot := []string{}
 	switch runtime.GOOS {
 	case "windows":
-		dbRoot = "C:\\\\Program Files (x86)\\osu!\\"
+		dbRoot = append(dbRoot, "C:\\\\Program Files (x86)\\osu!\\", "C:\\\\osu!\\")
+		if usr, err := user.Current(); err == nil {
+			dbRoot = append(dbRoot, path.Join(usr.HomeDir, "AppData", "Local", "osu!"))
+		}
+
 	case "darwin":
-		dbRoot = "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/"
+		dbRoot = append(
+			dbRoot,
+			"/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/",
+		)
 	default:
-		dbRoot = "./" // TODO: Where will this go?
+		dbRoot = append(dbRoot, "./") // TODO: Where will this go?
 	}
 
-	filePath := path.Join(dbRoot, fn)
-	_, err := os.Stat(filePath)
-	return filePath, err
+	for _, dir := range dbRoot {
+		if _, err := os.Stat(path.Join(dir, "osu!.db")); err != nil {
+			continue
+		}
+		if _, err := os.Stat(path.Join(dir, "scores.db")); err != nil {
+			continue
+		}
+		LogMsgf("found .db files at %s", dir)
+		return dir, nil
+	}
+
+	return "", errors.New(".db files were not found")
 }
 
 // Notify sends a desktop notification with the given string.
