@@ -28,12 +28,14 @@ awesome score you set on Haitai when it was still qualified.
 By default, your osu! database files (`scores.db` and `osu!.db`) are assumed to
 be in the following locations, dependent on your OS:
 
-* Windows: `C:\\Program Files (x86)\osu!\`
+* Windows: `C:\\Program Files (x86)\osu!\` or
+  `C:\\Users\YourUsername\AppData\Local\osu!`
 * MacOS: `/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!/`
 * Linux: `./` (whatever directory you run the executable in)
 
 If you keep your osu! directory somewhere else, you can set the `OSU_ROOT`
-environment variable to specify where it is.
+system variable to specify where it is. Otherwise, you'll be prompted to enter
+the location yourself.
 
 ## Log File
 
