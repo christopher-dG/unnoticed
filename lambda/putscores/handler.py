@@ -7,17 +7,28 @@ import time
 
 
 def handler(event, _):
+    body = {"error": "internal server error"}
     response = {
         "isBase64Encoded": False,
         "statusCode": 500,
         "headers": {},
-        "body": "server error",
+        "body": json.dumps(body),
     }
 
     try:
         db = json.loads(event["body"])
     except Exception as e:
         print(e)
+        body["error"] = "body is not valid JSON"
+        response["statusCode"] = 400
+        response["body"] = json.dumps(body)
+        return response
+
+    if "username" not in db or "scores" not in db:
+        print("Body is missing a key")
+        body["error"] = "body is missing required key: 'username' or 'scores'"
+        response["statusCode"] = 400
+        response["body"] = json.dumps(body)
         return response
 
     try:
@@ -29,6 +40,8 @@ def handler(event, _):
         )
     except Exception as e:
         print("Couldn't connect to DB: %s" % e)
+        body["error"] = "couldn't connect to database"
+        response["body"] = json.dumps(body)
         return response
 
     cur = conn.cursor()
@@ -36,6 +49,8 @@ def handler(event, _):
     print("Processing '%s'" % db["username"])
     result = name_to_id(cur, db["username"])
     if result is None:
+        body["error"] = "couldn't get a user from %s" % db["username"]
+        response["body"] = json.dumps(body)
         return cleanup(conn, cur, response, conn.rollback)
     user_id, username, exists = result
 
@@ -79,6 +94,8 @@ def handler(event, _):
         psycopg2.extras.execute_values(cur, sql, tuples)
     except Exception as e:
         print("Error inserting values: %s" % e)
+        body["error"] = "error inserting values into database"
+        response["body"] = json.dumps(body)
         return cleanup(conn, cur, response, conn.rollback)
     else:
         print("Added %d scores" % len(tuples))
@@ -87,8 +104,9 @@ def handler(event, _):
             (int(time.time()), user_id),
         )
 
+    body["error"] = ""
     response["statusCode"] = 200
-    response["body"] = "success"
+    response["body"] = json.dumps(s)
     return cleanup(conn, cur, response, conn.commit)
 
 
