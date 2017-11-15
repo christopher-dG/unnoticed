@@ -70,10 +70,12 @@ func (db *DB) Upload() (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	LogMsgf("Starting upload (%dKB)", len(out)/1000)
+
 	hc := http.Client{}
 	req, err := http.NewRequest(
 		http.MethodPut,
-		"https://tcx6ldznwk.execute-api.us-east-1.amazonaws.com/unnoticed/upload",
+		"https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/prod/proxy",
 		bytes.NewReader(out),
 	)
 	if err != nil {
