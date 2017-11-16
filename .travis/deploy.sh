@@ -27,19 +27,23 @@ case $STAGE in
         ;;
 
     'LAMBDA' )
+        # update-function-code outputs all environment variables and their values,
+        # so make sure to not output to stdout.
         if [ -f lambda/getscores/pkg.zip ]; then
             aws lambda update-function-code \
                 --function-name unnoticedGetScores \
-                --zip-file fileb://lambda/getscores/pkg.zip
+                --zip-file fileb://lambda/getscores/pkg.zip > /dev/null
+            echo 'Updated unnoticedGetScores'
         else
-            echo 'lambda/pkg.zip does not exist'
+            echo 'lambda/getscores/pkg.zip does not exist'
         fi
-        if [ -f lambda/getscores/pkg.zip ]; then
+        if [ -f lambda/putscores/pkg.zip ]; then
             aws lambda update-function-code \
                 --function-name unnoticedPutScores \
-                --zip-file fileb://lambda/putscores/pkg.zip
+                --zip-file fileb://lambda/putscores/pkg.zip > /dev/null
+            echo 'Updated unnoticedPutScores'
         else
-            echo 'lambda/pkg.zip does not exist'
+            echo 'lambda/putscores/pkg.zip does not exist'
         fi
         ;;
 
