@@ -75,7 +75,7 @@ func (db *DB) Upload() (*http.Response, error) {
 	hc := http.Client{}
 	req, err := http.NewRequest(
 		http.MethodPut,
-		"https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/prod/proxy",
+		"https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/unnoticed/proxy",
 		bytes.NewReader(out),
 	)
 	if err != nil {
