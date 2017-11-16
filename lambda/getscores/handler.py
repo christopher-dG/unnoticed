@@ -1,9 +1,11 @@
 import json
 import os
 import psycopg2
+import requests
 
 
 def handler(event, _):
+    """Retrieve scores for given beatmaps."""
     body = {
         "info": "",
         "error": "internal server error",
@@ -64,9 +66,10 @@ def handler(event, _):
     for map_id in set(map_ids):
         # The map_id key here will be converted to a string, unfortunately.
         body["scores"][map_id] = []
+        map_hash = get_hash(map_id)
         sql = """\
         select player_id, mode, player, n300, n100, n50, ngeki, nkatu, nmiss, \
-        score, combo, fc, mods, date from scores where map = %d\
+        score, combo, fc, mods, date, mhash from scores where map = %d\
         """ % map_id
         cur.execute(sql)
 
@@ -76,7 +79,8 @@ def handler(event, _):
                 d["player_id"], d["mode"], d["player"], d["n300"], d["n100"],
                 d["n50"], d["ngeki"], d["nkatu"], d["nmiss"], d["score"],
                 d["combo"], d["fc"], d["mods"], d["date"],
-            ) = score
+            ) = score[:-1]
+            d["outdated"] = map_hash != score[-1]
             body["scores"][map_id].append(d)
             body["nscores"] += 1
 
@@ -86,3 +90,23 @@ def handler(event, _):
 
     print("Returning %d total scores for %s" % (body["nscores"], map_ids))
     return response
+
+
+def get_hash(map_id):
+    """Get the MD5 hash of a beatmap's most recent version."""
+    print("Requesting beatmap %d" % map_id)
+    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&l=1" % (
+        os.environ["OSU_API_KEY"], map_id)
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("API request failed (%d)" % r.statusCode)
+        return None
+    body = json.loads(r.content)
+    if not body:
+        print("API request returned empty")
+        return None
+    try:
+        return body[0]["file_md5"]
+    except KeyError:
+        print("API response is missing file_md5 key")
+        return None

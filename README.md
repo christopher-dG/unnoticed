@@ -76,7 +76,8 @@ The response comes in this format:
         "combo": 502,
         "fc": false,
         "mods": 0,
-        "date": 1492835820
+        "date": 1492835820,
+        "outdated": false
       },
     ]
   }
