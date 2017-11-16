@@ -46,6 +46,46 @@ idea to investigate the log file. Its location is dependent on your OS:
 * MacOS: `$TMPDIR/osu-{scan,watch}.log`
 * Linux: `/tmp/osu-{scan,watch}.log`
 
+## API
+
+A public HTTP endpoint is provided for retrieving scores. It can be used like so:
+
+* `GET https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/unnoticed/proxy?b=BEATMAP_ID`
+* `GET https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/unnoticed/proxy?b=ID1,ID2,ID3`
+
+The response comes in this format:
+
+```json
+{
+  "info": "",
+  "error": "",
+  "nscores": 1,
+  "scores": {
+    "1181750": [
+      {
+        "player_id": 1,
+        "mode": 0,
+        "player": "username",
+        "n300": 682,
+        "n100": 36,
+        "n50": 1,
+        "ngeki": 112,
+        "nkatu": 16,
+        "nmiss": 8,
+        "score": 6159390,
+        "combo": 502,
+        "fc": false,
+        "mods": 0,
+        "date": 1492835820
+      },
+    ]
+  }
+}
+```
+
+Note that the beatmap ID keys inside `scores` are strings rather than integers
+(more information on why [here](https://stackoverflow.com/a/1451857)).
+
 ***
 
 This project is in no way affiliated with [osu!](https://osu.ppy.sh/home).
