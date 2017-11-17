@@ -1,9 +1,10 @@
 // ==UserScript==
-// @name         Unnoticed Leaderboards
+// @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
-// @version      0.1
+// @version      0.2
 // @description  Display unranked leaderboard entries gathered by Unnoticed on their respective beatmap pages
 // @author       Node
+// @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
 // @match        https://osu.ppy.sh/*/*
 // @include      https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/*
 // @grant        GM_xmlhttpRequest
@@ -32,7 +33,7 @@
         'AT' : 2048,
         'SO' : 4096,
         'AP' : 8192,
-        'PF' :16384 
+        'PF' : 16384,
     };
 
     function accuracy(c300, c100, c50, cmiss){
@@ -47,12 +48,12 @@
         var ctotal = c300 + c100 + c50 + cmiss;
         var p300 = c300 / ctotal;
         if(c100 == 0 && c50 == 0 && cmiss == 0){
-            if(mods.includes("HD"))
+            if(mods.includes("HD") || mods.includes("FL"))
                 return "XH";
             else
                 return "X";
         }else if(p300 > 0.9 && c50 / ctotal < 0.01 && cmiss == 0){
-            if(mods.includes("HD"))
+            if(mods.includes("HD") || mods.includes("FL"))
                 return "SH";
             else
                 return "S";
@@ -76,14 +77,18 @@
         return return_array;
     }
 
-    function mods_string(enabled_mods){
-        if(mods(enabled_mods).length > 0)
-            return  mods(enabled_mods)
-                    .join(",")
-                    .replace("DT,NC", "NC")
-                    .replace("SD,PF", "PF");
-        else
+    function mods_string(mods_array){
+        if(mods_array.length > 0){
+            if(mods_array.includes("NC"))
+                mods_array.splice(mods_array.indexOf("DT"), 1);
+
+            if(mods_array.includes("PF"))
+                mods_array.splice(mods_array.indexOf("SD"), 1);
+
+            return mods_array.join(",");
+        }else{
             return "None";
+        }
     }
 
     var api_base = "https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/unnoticed/proxy?b=";
@@ -124,7 +129,7 @@
                 if(scores.length > 0){
                     $('<div style="margin:20px auto; background: rgb(208, 231, 249); border-radius: 5px; width: 50%; padding: 15px;">'
                     + '<center>This map is UNRANKED.<br />'
-                    + 'As such, it doesn\'t reward any pp and scores are retrieved via Unnoticed.</center>'
+                    + 'As such, it doesn\'t reward any pp and scores are retrieved via <a target="_blank" href="https://github.com/christopher-dG/unnoticed">[Unnoticed]</a>.</center>'
                     + '</div>').insertAfter("#songinfo");
 
                 var insert_html = 
@@ -148,7 +153,7 @@
                     + '<tr class="row2p"><td><strong>Misses</strong></td><td>' + scores[0].nmiss + '</td></tr>'
                     + '<tr class="row1p"><td><strong>Geki (Elite Beat!)</strong></td><td>' + scores[0].ngeki + '</td></tr>'
                     + '<tr class="row2p"><td><strong>Katu (Beat!)</strong></td><td>' + scores[0].nkatu + '</td></tr>'
-                    + '<tr class="row1p"><td><strong>Mods</strong></td><td>' + mods_string(scores[0].mods) + '</td></tr>'
+                    + '<tr class="row1p"><td><strong>Mods</strong></td><td>' + mods_string(mods(scores[0].mods)) + '</td></tr>'
                     + '</table>'
                     + '</div>'
                     + '<div class="clear"></div>'
@@ -171,6 +176,7 @@
                     + '</tr>';
 
                 scores.forEach(function(score, index){
+                    var mods_array = mods(score.mods);
                     insert_html += '<tr class="';
                     if(index % 2 == 0) insert_html += 'row2p'
                         else insert_html += 'row1p';
@@ -178,7 +184,7 @@
                     += '">'
                     + '<td><span>#' + (index + 1) + '</span></td>'
                     + '<td><img src="//s.ppy.sh/images/' 
-                    + grade(score.n300, score.n100, score.n50, score.nmiss, mods(score.mods)) + '_small.png" /></td>'
+                    + grade(score.n300, score.n100, score.n50, score.nmiss, mods_array) + '_small.png" /></td>'
                     + '<td><b>' + score.score.toLocaleString() + '</b></td>'
                     + '<td>' + accuracy(score.n300, score.n100, score.n50, score.nmiss) + '%</td>'
                     + '<td> <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
@@ -187,7 +193,7 @@
                     + '<td>' + score.ngeki + '</td>'
                     + '<td>' + score.nkatu + '</td>'
                     + '<td>' + score.nmiss + '</td>'
-                    + '<td>' + mods_string(score.mods) + '</td>'
+                    + '<td>' + mods_string(mods_array) + '</td>'
                     + '<td></td>'
                     + '</tr>';
                 });
