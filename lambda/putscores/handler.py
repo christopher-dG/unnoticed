@@ -3,7 +3,6 @@ import os
 import psycopg2
 import psycopg2.extras
 import requests
-import time
 
 
 def handler(event, _):
@@ -52,23 +51,13 @@ def handler(event, _):
         body["error"] = "couldn't get a user from %s" % db["username"]
         response["body"] = json.dumps(body)
         return cleanup(conn, cur, response, conn.rollback)
-    user_id, username, exists = result
+    user_id, username = result
 
-    if exists:
-        cur.execute("select updated from players where id = %d" % user_id)
-        result = cur.fetchone()
-        if result:
-            last_update = result[0]
-        else:  # This should never happen.
-            last_update = 0  # Upload all scores, we can clean up later.
-            print("Couldn't get last update time for player %d" % user_id)
-    else:  # User is not in the database yet.
-        last_update = 0  # We want to upload all scores.
-
+    cur.execute("select shash from scores where player_id = %d;" % user_id)
+    exists = {s[0]: True for s in cur.fetchall()}
     tuples = []
     for s in db["scores"]:
-        # Any plays older then the last update should be already uploaded.
-        if s["date"] < last_update:
+        if s["shash"] in exists:  # The replay file hash is unique.
             continue
         # Some scores appear to be missing the username. Ignore these so that
         # we don't accidentally credit someone with a score they didn't make.
@@ -79,6 +68,7 @@ def handler(event, _):
         if s["player"] != username:
             continue
 
+        exists[s["shash"]] = True
         tuples.append((
             user_id, s["mode"], s["ver"], s["mhash"], s["player"], s["shash"],
             s["n300"], s["n100"], s["n50"], s["ngeki"], s["nkatu"], s["nmiss"],
@@ -99,11 +89,8 @@ def handler(event, _):
         return cleanup(conn, cur, response, conn.rollback)
     else:
         print("Added %d scores" % len(tuples))
-        cur.execute(
-            "update players set updated = %d where id = %d;" %
-            (int(time.time()), user_id),
-        )
 
+    body["nscores"] = len(tuples)
     body["error"] = ""
     response["statusCode"] = 200
     response["body"] = json.dumps(s)
@@ -112,16 +99,14 @@ def handler(event, _):
 
 def name_to_id(cur, name):
     """
-    Get a player's user ID from their name. Returns the ID and username, as
-    well as True if the user is already in the database and False otherwise.
-    If the usre cannot be found at all, None is returned.
+    Get a player's user ID from their name. Returns the ID and username.
     Additionally, this handles inserting new users and updating names
     when necessary.
     """
     cur.execute("select id from players where username = '%s';" % name)
     result = cur.fetchone()
     if result:
-        return result[0], name, True
+        return result[0], name
 
     url = "https://osu.ppy.sh/api/get_user?k=%s&u=%s&type=string" % (
         os.environ["OSU_API_KEY"], name)
@@ -144,12 +129,13 @@ def name_to_id(cur, name):
             "update players set username = '%s' where id = %d;" %
             (username, user_id),
         )
-        return user_id, username, True
-    cur.execute(
-        "insert into players values (%d, '%s', 0);" %
-        (user_id, username),
-    )
-    return user_id, username, False
+    else:
+        cur.execute(
+            "insert into players values (%d, '%s');" %
+            (user_id, username),
+        )
+
+    return user_id, username
 
 
 def cleanup(conn, cur, resp, func):
