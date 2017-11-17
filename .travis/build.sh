@@ -38,8 +38,8 @@ case $STAGE in
         echo $DIR > .bin-dir
         ;;
 
-    'LAMBDA' )
-        cd lambda
+    'API' )
+        cd api
         git clone https://github.com/jkehler/awslambda-psycopg2
         cp -r awslambda-psycopg2/psycopg2-3.6 ./getscores/psycopg2
         cp -r awslambda-psycopg2/psycopg2-3.6 ./putscores/psycopg2

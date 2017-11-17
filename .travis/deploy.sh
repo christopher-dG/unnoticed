@@ -26,24 +26,24 @@ case $STAGE in
         aws s3 mv --recursive $DIR s3://unnoticed-deploy/$DIR
         ;;
 
-    'LAMBDA' )
+    'API' )
         # update-function-code outputs all environment variables and their values,
         # so make sure to not output to stdout.
-        if [ -f lambda/getscores/pkg.zip ]; then
+        if [ -f api/getscores/pkg.zip ]; then
             aws lambda update-function-code \
                 --function-name unnoticedGetScores \
-                --zip-file fileb://lambda/getscores/pkg.zip > /dev/null
+                --zip-file fileb://api/getscores/pkg.zip > /dev/null
             echo 'Updated unnoticedGetScores'
         else
-            echo 'lambda/getscores/pkg.zip does not exist'
+            echo 'api/getscores/pkg.zip does not exist'
         fi
-        if [ -f lambda/putscores/pkg.zip ]; then
+        if [ -f api/putscores/pkg.zip ]; then
             aws lambda update-function-code \
                 --function-name unnoticedPutScores \
-                --zip-file fileb://lambda/putscores/pkg.zip > /dev/null
+                --zip-file fileb://api/putscores/pkg.zip > /dev/null
             echo 'Updated unnoticedPutScores'
         else
-            echo 'lambda/putscores/pkg.zip does not exist'
+            echo 'api/putscores/pkg.zip does not exist'
         fi
         ;;
 
