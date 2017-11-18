@@ -93,7 +93,7 @@ def handler(event, _):
     body["nscores"] = len(tuples)
     body["error"] = ""
     response["statusCode"] = 200
-    response["body"] = json.dumps(s)
+    response["body"] = json.dumps(body)
     return cleanup(conn, cur, response, conn.commit)
 
 
