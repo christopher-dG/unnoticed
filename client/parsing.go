@@ -291,14 +291,24 @@ func osuDB(fn string) (string, []*Beatmap, error) {
 	}
 	LogMsgf("osu.db contains %d beatmaps", nMaps)
 
+	zeros := 0
 	for i := 1; i <= int(nMaps); i++ {
 		if beatmap, err := readMap(f, v); err != nil {
-			LogMsgf("map %d: %s", i, err)
+			if err.Error() == "beatmap id is 0" {
+				// This "error" occurs really frequently,
+				// so don't spam the log file.
+				zeros++
+			} else {
+				LogMsgf("map %d: %s", i, err)
+			}
 		} else {
 			beatmaps = append(beatmaps, beatmap)
 		}
 	}
 
+	if zeros > 0 {
+		LogMsgf("%d beatmaps couldn't be parsed because their ID was 0", zeros)
+	}
 	LogMsgf("parsed %d/%d beatmaps", len(beatmaps), nMaps)
 	return username, beatmaps, err
 }
