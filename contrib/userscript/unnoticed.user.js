@@ -119,7 +119,7 @@
                     return_string = "C";
                 break;
         }
-        if(mods.includes("HD") || mods.includes("FL"))
+        if((return_string == "X" || return_string == "S") && (mods.includes("HD") || mods.includes("FL")))
             return_string += "H";
         return return_string;
     }
