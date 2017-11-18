@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -40,6 +41,12 @@ type DB struct {
 	Username string     // Player username.
 	Scores   []*Score   // List of scores.
 	Beatmaps []*Beatmap // List of beatmaps.
+}
+
+// ResponseBody is the JSON object returned by the score upload request.
+type ResponseBody struct {
+	Error   string `json:"error"`
+	NScores int    `json:"nscores"`
 }
 
 func (db *DB) MarshalJSON() ([]byte, error) {
@@ -81,14 +88,33 @@ func (db *DB) Upload() (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	resp, err := hc.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+	bodyText, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		LogMsg("reading response body failed")
+	} else {
+		body := new(ResponseBody)
+		err = json.Unmarshal(bodyText, body)
+		if err != nil {
+			LogMsgf("decoding response body failed: %s", string(bodyText))
+		} else {
+			LogMsgf("%d new scores were added", body.NScores)
+			if len(body.Error) > 0 {
+				LogMsgf("response error: %s", body.Error)
+			}
+		}
+	}
+
 	if resp.StatusCode != 200 {
 		return nil, errors.New("Upload returned error code " + resp.Status)
 	}
-	return resp, err
+	return resp, nil
 }
 
 // NewDB creates a new score database.
