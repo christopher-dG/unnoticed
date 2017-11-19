@@ -1,33 +1,57 @@
 package unnoticed
 
 import (
+	"crypto/md5"
+	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/fsnotify/fsnotify"
 )
 
 // Watch waits until fn is modified.
 func Watch(fn string) {
-	fn, err := filepath.Abs(fn)
+	path, err := filepath.Abs(fn)
 	if err != nil {
 		LogMsg(err)
+		path = fn
 	}
-	watcher, err := fsnotify.NewWatcher()
+
+	initHash, err := getHash(path)
 	if err != nil {
-		LogFatalf("couldn't get a watcher for %s", fn)
+		// This shouldn't happen, but if it does then wait a
+		// bit before returning to avoid spamming my API.
+		LogMsg(err)
+		LogMsgf("Couldn't get initial hash value for %s", path)
+		time.Sleep(time.Minute)
+		return
 	}
-	watcher.Add(fn)
-	defer watcher.Close()
+	fmt.Printf("%x\n", initHash)
 	for {
-		select {
-		case event := <-watcher.Events:
-			// Wait a bit to make sure we don't process bursts of events.
-			time.Sleep(5 * time.Second)
-			LogMsgf("monitor event: %s", event)
+		hash, err := getHash(path)
+		if err != nil {
+			LogMsg(err)
+		} else if string(hash) != string(initHash) {
+			LogMsgf("%s was modified", path)
 			return
-		case err := <-watcher.Errors:
-			LogMsgf("monitor error: %s", err)
 		}
+		time.Sleep(time.Second * 10)
+	}
+}
+
+// getHash computes the MD5 hash value for the file fn.
+func getHash(fn string) ([]byte, error) {
+	f, err := os.Open(fn)
+	if err != nil {
+		LogMsgf("reading %s failed", fn)
+		return nil, err
+	}
+	defer f.Close()
+	h := md5.New()
+	if _, err := io.Copy(h, f); err != nil {
+		LogMsgf("computing the hash for %s failed", fn)
+		return nil, err
+	} else {
+		return h.Sum(nil), nil
 	}
 }
