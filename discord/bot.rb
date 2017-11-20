@@ -8,7 +8,7 @@ require 'terminal-table'
 OLD_SAMPLE = 'https://osu.ppy.sh/b/123'
 NEW_SAMPLE = 'https://osu.ppy.sh/beatmapsets/123#osu/123'
 OLD_REGEX = /osu.ppy.sh\/b\/([0-9]+)/
-NEW_REGEX = /osu.ppy.sh\/beatmapsets\/[0-9]+#[a-z]+\/([0-9]+)/
+NEW_REGEX = /osu.ppy.sh\/beatmapsets\/[0-9]+\/?#[a-z]+\/([0-9]+)/
 
 # Reply to a message containing a beatmap link with a leaderboard table.
 def process_map(msg)
