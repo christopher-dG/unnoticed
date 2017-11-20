@@ -69,7 +69,8 @@ def handler(event, _):
         map_hash = get_hash(map_id)
         sql = """\
         select player_id, mode, player, n300, n100, n50, ngeki, nkatu, nmiss, \
-        score, combo, fc, mods, date, mhash from scores where map = %d\
+        score, combo, fc, mods, date, flag, mhash from scores join players on \
+        scores.player_id = players.id where map = %d\
         """ % map_id
         cur.execute(sql)
 
@@ -78,7 +79,7 @@ def handler(event, _):
             (
                 d["player_id"], d["mode"], d["player"], d["n300"], d["n100"],
                 d["n50"], d["ngeki"], d["nkatu"], d["nmiss"], d["score"],
-                d["combo"], d["fc"], d["mods"], d["date"],
+                d["combo"], d["fc"], d["mods"], d["date"], d["flag"],
             ) = score[:-1]
             d["outdated"] = map_hash != score[-1]
             body["scores"][map_id].append(d)

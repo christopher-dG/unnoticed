@@ -53,7 +53,7 @@ def handler(event, _):
         return cleanup(conn, cur, response, conn.rollback)
     user_id, username = result
 
-    cur.execute("select shash from scores where player_id = %d;" % user_id)
+    cur.execute("select shash from scores where player_id = %d" % user_id)
     exists = {s[0]: True for s in cur.fetchall()}
     tuples = []
     for s in db["scores"]:
@@ -103,7 +103,7 @@ def name_to_id(cur, name):
     Additionally, this handles inserting new users and updating names
     when necessary.
     """
-    cur.execute("select id from players where username = '%s';" % name)
+    cur.execute("select id from players where username = '%s'" % name)
     result = cur.fetchone()
     if result:
         return result[0], name
@@ -121,19 +121,20 @@ def name_to_id(cur, name):
 
     user_id = int(body[0]["user_id"])
     username = body[0]["username"]
+    flag = body[0]["country"]
 
-    cur.execute("select username from players where id = %d;" % user_id)
+    cur.execute("select username from players where id = %d" % user_id)
     result = cur.fetchone()
     if result:  # Name change.
         cur.execute(
-            "update players set username = '%s' where id = %d;" %
+            "update players set username = '%s' where id = %d" %
             (username, user_id),
         )
     else:
-        cur.execute(
-            "insert into players values (%d, '%s');" %
-            (user_id, username),
-        )
+        sql = """\
+        insert into players (id, username, flag) values (%d, '%s', '%s')
+        """ % (user_id, username, flag)
+        cur.execute(sql)
 
     return user_id, username
 
