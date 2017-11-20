@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"sort"
 )
 
 // Beatmap is an osu! beatmap.
@@ -123,16 +124,22 @@ func NewDB(username string, scores []*Score, beatmaps []*Beatmap) *DB {
 	db.Username = username
 	db.Beatmaps = beatmaps
 
+	// Get rid of any scores that don't have a matching beatmap,
+	// since we have no way to identify which map they belong to.
+	md5s := []string{}
+	for _, beatmap := range beatmaps {
+		md5s = append(md5s, beatmap.MD5)
+	}
+	sort.Strings(md5s)
+	l := len(md5s)
+
 	filteredScores := []*Score{}
 	for _, score := range scores {
-		// TODO: Sort + binary search. But this only takes a few seconds anyways.
-		for _, beatmap := range beatmaps {
-			if beatmap.MD5 == score.MHash {
-				filteredScores = append(filteredScores, score)
-				break
-			}
+		if i := sort.SearchStrings(md5s, score.MHash); i < l && md5s[i] == score.MHash {
+			filteredScores = append(filteredScores, score)
 		}
 	}
+
 	LogMsgf(
 		"pruned %d scores without matching beatmaps",
 		len(scores)-len(filteredScores),

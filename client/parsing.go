@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"os"
+	"time"
 )
 
 const (
@@ -262,6 +263,7 @@ func readMap(f *os.File, v uint32) (*Beatmap, error) {
 // osuDB reads beatmaps from the osu! database file.
 // https://osu.ppy.sh/help/wiki/osu!_File_Formats/Db_(file_format)
 func osuDB(fn string) (string, []*Beatmap, error) {
+	start := time.Now()
 	beatmaps := []*Beatmap{}
 	username := ""
 	f, err := os.Open(fn)
@@ -310,12 +312,14 @@ func osuDB(fn string) (string, []*Beatmap, error) {
 		LogMsgf("%d beatmaps couldn't be parsed because their ID was 0", zeros)
 	}
 	LogMsgf("parsed %d/%d beatmaps", len(beatmaps), nMaps)
+	LogMsgf("took %.3f seconds", time.Now().Sub(start).Seconds())
 	return username, beatmaps, err
 }
 
 // scoresDB reads scores from the scores database file.
 // https://osu.ppy.sh/help/wiki/osu!_File_Formats/Db_(file_format)
 func scoresDB(fn string) ([]*Score, error) {
+	start := time.Now()
 	scores := []*Score{}
 	f, err := os.Open(fn)
 	if err != nil {
@@ -345,6 +349,7 @@ func scoresDB(fn string) ([]*Score, error) {
 	}
 
 	LogMsgf("parsed %d scores for %d beatmaps", len(scores), nMaps)
+	LogMsgf("took %.3f seconds", time.Now().Sub(start).Seconds())
 	return scores, err
 }
 
