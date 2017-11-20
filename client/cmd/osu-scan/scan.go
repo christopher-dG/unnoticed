@@ -16,22 +16,23 @@ func main() {
 		unnoticed.LogMsgf("log file: %s", logFile)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
 	osuDir, err := unnoticed.OsuDir()
 	if err != nil {
-		fmt.Println("osu! database files were not found.")
-		fmt.Println("Enter the full path to your osu! install folder:")
-		line, _, err := reader.ReadLine()
+		unnoticed.LogMsg(err)
+		fmt.Printf("\n> Enter the full path to your osu! install folder:\n> ")
+		line, _, err := bufio.NewReader(os.Stdin).ReadLine()
+		fmt.Println()
 		if err != nil { // This should really not happen.
-			unnoticed.LogFatal("Error reading line")
+			unnoticed.LogMsg("Error reading line")
+			done(logFile, 1)
 		}
+
 		osuDir = string(line)
 		_, err1 := os.Stat(path.Join(osuDir, "osu!.db"))
 		_, err2 := os.Stat(path.Join(osuDir, "scores.db"))
 		if err1 != nil || err2 != nil {
-			fmt.Println("osu! database files were not found, press enter to exit.")
-			reader.ReadByte()
-			os.Exit(1)
+			unnoticed.LogMsgf("osu! database files were not found at %s", osuDir)
+			done(logFile, 1)
 		}
 	}
 
@@ -40,19 +41,21 @@ func main() {
 	db, err := unnoticed.BuildDB(scoresPath, osuPath)
 	if err != nil {
 		unnoticed.Notify("Processing scores failed")
-		unnoticed.LogFatal(err)
+		unnoticed.LogMsg(err)
+		done(logFile, 1)
 	}
 
-	if resp, err := db.Upload(); err != nil {
+	if _, err := db.Upload(); err != nil {
 		unnoticed.Notify("Uploading scores failed")
-		unnoticed.LogFatal(err)
-	} else if resp.StatusCode != 200 {
-		unnoticed.Notify("Uploading scores failed")
-		unnoticed.LogMsgf("status: %s", resp.Status)
-	} else {
-		unnoticed.Notify("Uploading scores succeeded")
+		unnoticed.LogMsg(err)
+		done(logFile, 1)
 	}
+	unnoticed.Notify("Uploading scores succeeded")
+	done(logFile, 0)
+}
 
-	fmt.Printf("\nDone: Your log file is at %s.\nPress enter to exit.", logFile)
-	reader.ReadByte()
+func done(logFile string, status int) {
+	fmt.Printf("\n> Done: Your log file is at %s.\n> Press enter to exit.", logFile)
+	bufio.NewReader(os.Stdin).ReadByte()
+	os.Exit(status)
 }
