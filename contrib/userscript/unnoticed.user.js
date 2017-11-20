@@ -2,7 +2,7 @@
 // @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
 // @version      1.0
-// @description  Display unranked leaderboard entries gathered by Unnoticed on their respective beatmap pages
+// @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       Node
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
 // @match        https://osu.ppy.sh/*/*
@@ -44,7 +44,7 @@
                     (c300 * 300 + c100 * 300 + c50 * 300 + cmiss * 300)
                     * 100;
                 break;
-            case 1: 
+            case 1:
                 return_int =
                     (c300 * 300 + c100 * 150) /
                     (c300 * 300 + c100 * 300 + cmiss * 300)
@@ -156,13 +156,13 @@
         if(current_url.split("&m=").length > 1)
             mode = parseInt(current_url.split("&m=").pop().split("&")[0]);
 
-        
+
 
         var active_beatmap = $(".beatmapTab.active");
-        var beatmap_id = 
+        var beatmap_id =
             active_beatmap.attr("href").split("/").pop().split("&")[0];
-                        
-        var forced_mode = 
+
+        var forced_mode =
             parseInt(active_beatmap.attr("href").split("&m=").pop());
 
         if(forced_mode != 0) mode = forced_mode;
@@ -177,10 +177,10 @@
                     var response = JSON.parse(response_raw.responseText);
                     var scores = [];
                     var scores_mode = response.scores[beatmap_id].filter(function(a){ return a.mode == mode; });
-    
+
                     scores_mode.forEach(function(score){
                         var exists = false;
-    
+
                         scores.forEach(function(score_check, index){
                             if(score_check.player_id == score.player_id){
                                 exists = true;
@@ -188,7 +188,7 @@
                                     scores[index] = score;
                             }
                         });
-    
+
                         if(!exists)
                             scores.push(score);
                     });
@@ -222,24 +222,27 @@
                     '" href="/p/beatmap?b=' + beatmap_id + '&m=3">osu!mania</a></li>'
                     + '</ul>'
                     + '</div>';
-    
+
                     if(scores.length > 0){
                         scores.forEach(function(score, index){
                             var mods_array = mods(score.mods);
                             score.accuracy = accuracy(mode, score.n300, score.n100, score.n50, score.nmiss, score.nkatu, score.ngeki);
                             score.grade = grade(mode, mods_array, score.accuracy, score.n300, score.n100, score.n50, score.nmiss);
+                            score.flag = score.flag.toLowerCase();
 
                             if(index == 0){
                                 insert_html
                                 += '<div style="text-align: center; width: 100%;">'
                                 + '<div style="display: inline-block; margin: 3px; text-align: left;">'
                                 + '<table class="scoreLeader" style="margin-top: 10px;" cellpadding="0" cellspacing="0">'
-                                + '<tr><td class="title" colspan=3> <a href="/u/' + score.player_id + '"> '
-                                + score.player + '</a> is in the lead! (<time class="timeago" datetime="' 
+                                + '<tr><td class="title" colspan=3>'
+                                + '<img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
+                                + ' <a href="/u/' + score.player_id + '"> '
+                                + score.player + '</a> is in the lead! (<time class="timeago" datetime="'
                                 + moment.unix(score.date).format() + '">'
                                 + moment.unix(score.date).fromNow() + '</time>)</td></tr>'
                                 + '<tr class="row1p">'
-                                + '<td><strong>Score</strong></td><td>' + score.score.toLocaleString() 
+                                + '<td><strong>Score</strong></td><td>' + score.score.toLocaleString()
                                 + ' (' + score.accuracy.toFixed(2) + '%)</td>'
                                 + '<td class="rank" width="120px" align="center" colspan="1" rowspan="7"><img src="//s.ppy.sh/images/'
                                 + score.grade
@@ -250,7 +253,7 @@
                                     insert_html
                                     += '<tr class="row1p"><td><strong>MAX / 300 / 200</strong></td><td>'
                                     + score.ngeki + ' / ' + score.n300 + ' / ' + score.nkatu + '</td></tr>'
-                                    + '<tr class="row2p"><td><strong>100 / 50 / Misses</strong></td><td>' 
+                                    + '<tr class="row2p"><td><strong>100 / 50 / Misses</strong></td><td>'
                                     + score.n100 + ' / ' + score.n50 + ' / ' + score.nmiss + '</td></tr>';
                                 }else{
                                     insert_html
@@ -307,16 +310,20 @@
                             }
 
                             insert_html += '<tr class="';
-                            if(index % 2 == 0) insert_html += 'row2p'
-                                else insert_html += 'row1p';
+                            if(index % 2 == 0)
+                                insert_html += 'row2p'
+                            else
+                                insert_html += 'row1p';
                             insert_html
                             += '">'
                             + '<td><span>#' + (index + 1) + '</span></td>'
-                            + '<td><img src="//s.ppy.sh/images/' 
+                            + '<td><img src="//s.ppy.sh/images/'
                             + score.grade + '_small.png" /></td>'
                             + '<td><b>' + score.score.toLocaleString() + '</b></td>'
                             + '<td>' + score.accuracy.toFixed(2) + '%</td>'
-                            + '<td><div style="width: 16px; height: 11px; display: inline-block;"></div> <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
+                            + '<td><div style="width: 16px; height: 11px; display: inline-block;"></div> '
+                            + '<img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
+                            + ' <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
                             + '<td>' + score.combo + '</td>';
                             if(mode == 3){
                                 insert_html
@@ -336,7 +343,7 @@
                             + '<td>' + mods_string(mods_array) + '</td>'
                             + '<td style="opacity: 0; pointer-events: none;"><a>Report</a></td>'
                             + '</tr>';
-                        });  
+                        });
                     }
 
                     insert_html += '</table></div>';
