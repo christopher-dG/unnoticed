@@ -2,7 +2,6 @@ package unnoticed
 
 import (
 	"crypto/md5"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -26,7 +25,7 @@ func Watch(fn string) {
 		time.Sleep(time.Minute)
 		return
 	}
-	fmt.Printf("%x\n", initHash)
+
 	for {
 		hash, err := getHash(path)
 		if err != nil {
