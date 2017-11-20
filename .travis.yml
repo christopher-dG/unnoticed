@@ -7,6 +7,7 @@ addons:
   apt:
     packages: python3-pip
 env:
+  - STAGE=TEST
   - STAGE=CLIENT
   - STAGE=API
   - STAGE=DISCORD

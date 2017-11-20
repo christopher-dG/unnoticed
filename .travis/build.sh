@@ -6,6 +6,15 @@ set -e
 
 case $STAGE in
 
+    'TEST' )
+        pip install awscli --user
+        aws configure set region us-east-1
+        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+        aws configure set aws_secret_accses_key $AWS_SECRET_ACCESS_KEY
+        aws s3 sync s3://unnoticed-test ./testdata
+        go test
+        ;;
+
     'CLIENT' )
         export DIR=bin-$(date '+%FT%T')-${TRAVIS_BRANCH=local}
         mkdir -vp $DIR
