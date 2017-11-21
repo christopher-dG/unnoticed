@@ -189,7 +189,7 @@
                 }else{
                     var response = JSON.parse(response_raw.responseText);
                     var scores = [];
-                    var scores_mode = response.scores[beatmap_id].filter(function(a){ return a.mode == mode; });
+                    var scores_mode = response.scores[beatmap_id].filter(function(a){ return a.mode == mode && !a.outdated; });
 
                     scores_mode.forEach(function(score){
                         var exists = false;
