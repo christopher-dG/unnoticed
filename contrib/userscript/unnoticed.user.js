@@ -180,6 +180,8 @@
 
         if(forced_mode != 0) mode = forced_mode;
 
+        var showOutdated = window.location.hash == "#showOutdated" ? true : false;
+
         GM_xmlhttpRequest({
             method: "GET",
             url: api_base + beatmap_id,
@@ -189,13 +191,14 @@
                 }else{
                     var response = JSON.parse(response_raw.responseText);
                     var scores = [];
-                    var scores_mode = response.scores[beatmap_id].filter(function(a){ return a.mode == mode && !a.outdated; });
+                    var scores_mode = response.scores[beatmap_id].filter(function(a){ return a.mode == mode; });
+                    if(!showOutdated) scores_mode = scores_mode.filter(function(a){ return !a.outdated; });
 
                     scores_mode.forEach(function(score){
                         var exists = false;
 
                         scores.forEach(function(score_check, index){
-                            if(score_check.player_id == score.player_id){
+                            if(score_check.player_id == score.player_id && score_check.outdated == score.outdated){
                                 exists = true;
                                 if(score_check.score < score.score)
                                     scores[index] = score;
@@ -215,7 +218,7 @@
                     + '</div>').insertAfter("#songinfo");
 
                     var insert_html =
-                    '<div id="tablist" style="margin-top: 15px; margin-bottom: 15px;">'
+                      '<div id="tablist" style="margin-top: 15px; margin-bottom: 15px;">'
                     + '<ul>'
                     + '<li><a class="';
                     if(mode == 0) insert_html += 'active';
@@ -243,11 +246,13 @@
                             score.grade = grade(mode, mods_array, score.accuracy, score.n300, score.n100, score.n50, score.nmiss);
                             score.flag = score.flag.toLowerCase();
 
+                            var outdated_style = score.outdated ? "opacity: 0.7;" : "";
+
                             if(index == 0){
                                 insert_html
                                 += '<div style="text-align: center; width: 100%;">'
                                 + '<div style="display: inline-block; margin: 3px; text-align: left;">'
-                                + '<table class="scoreLeader" style="margin-top: 10px;" cellpadding="0" cellspacing="0">'
+                                + '<table class="scoreLeader" style="margin-top: 10px;' + outdated_style + '" cellpadding="0" cellspacing="0">'
                                 + '<tr><td class="title" colspan=3>'
                                 + '<img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
                                 + ' <a href="/u/' + score.player_id + '"> '
@@ -290,6 +295,7 @@
                                 + '</div>'
                                 + '<a name="scores"></a>'
                                 + '<h2 style="margin-left: 4px;">Top 50 Scoreboard</h2>'
+                                + '<label><input type="checkbox" id="showOutdated" style="vertical-align: middle;"> Show outdated scores</label>'
                                 + '<div class="beatmapListing">'
                                 + '<table width="100%" cellspacing="0">'
                                 + '<tr class="titlerow">'
@@ -328,14 +334,13 @@
                             else
                                 insert_html += 'row1p';
                             insert_html
-                            += '">'
+                            += '" style="' + outdated_style + '">'
                             + '<td><span>#' + (index + 1) + '</span></td>'
                             + '<td><img src="//s.ppy.sh/images/'
                             + score.grade + '_small.png" /></td>'
                             + '<td><b>' + score.score.toLocaleString() + '</b></td>'
                             + '<td>' + score.accuracy.toFixed(2) + '%</td>'
-                            + '<td><div style="width: 16px; height: 11px; display: inline-block;"></div> '
-                            + '<img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
+                            + '<td><img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
                             + ' <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
                             + '<td>' + score.combo + '</td>';
                             if(mode == 3){
@@ -361,6 +366,20 @@
 
                     insert_html += '</table></div>';
                     $(insert_html).insertAfter(".paddingboth");
+
+                    if(showOutdated){
+                        $("#showOutdated").prop('checked', true);
+                    }
+
+                    $("#showOutdated").change(function(){
+                        if(this.checked){
+                            window.location.hash = "#showOutdated";
+                            location.reload();
+                        }else{
+                            window.location.hash = "";
+                            location.reload();
+                        }
+                    });
                 }
             }
         });
