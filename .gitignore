@@ -1,5 +1,7 @@
+/client/testdata/
 **/scores.db
 **/osu!.db
+**/db.json
 **/bin-*
 **/.bin-dir
 **/.env
