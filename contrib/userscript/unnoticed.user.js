@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
-// @version      1.0.1
+// @version      1.0.2
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       Node
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
@@ -180,6 +180,8 @@
 
         if(forced_mode != 0) mode = forced_mode;
 
+        var showOutdated = window.location.hash == "#showOutdated" ? true : false;
+
         GM_xmlhttpRequest({
             method: "GET",
             url: api_base + beatmap_id,
@@ -190,6 +192,7 @@
                     var response = JSON.parse(response_raw.responseText);
                     var scores = [];
                     var scores_mode = response.scores[beatmap_id].filter(function(a){ return a.mode == mode; });
+                    if(!showOutdated) scores_mode = scores_mode.filter(function(a){ return !a.outdated; });
 
                     scores_mode.forEach(function(score){
                         var exists = false;
@@ -215,7 +218,7 @@
                     + '</div>').insertAfter("#songinfo");
 
                     var insert_html =
-                    '<div id="tablist" style="margin-top: 15px; margin-bottom: 15px;">'
+                      '<div id="tablist" style="margin-top: 15px; margin-bottom: 15px;">'
                     + '<ul>'
                     + '<li><a class="';
                     if(mode == 0) insert_html += 'active';
@@ -234,20 +237,22 @@
                     insert_html +=
                     '" href="/p/beatmap?b=' + beatmap_id + '&m=3">osu!mania</a></li>'
                     + '</ul>'
-                    + '</div>';
+                    + '</div>'
+                    + '<label><input type="checkbox" id="showOutdated" style="vertical-align: middle;"> Show outdated scores</label>';
 
-                    if(scores.length > 0){
-                        scores.forEach(function(score, index){
-                            var mods_array = mods(score.mods);
-                            score.accuracy = accuracy(mode, score.n300, score.n100, score.n50, score.nmiss, score.nkatu, score.ngeki);
-                            score.grade = grade(mode, mods_array, score.accuracy, score.n300, score.n100, score.n50, score.nmiss);
-                            score.flag = score.flag.toLowerCase();
+                    scores.forEach(function(score, index){
+                        var mods_array = mods(score.mods);
+                        score.accuracy = accuracy(mode, score.n300, score.n100, score.n50, score.nmiss, score.nkatu, score.ngeki);
+                        score.grade = grade(mode, mods_array, score.accuracy, score.n300, score.n100, score.n50, score.nmiss);
+                        score.flag = score.flag.toLowerCase();
 
-                            if(index == 0){
-                                insert_html
+                        var outdated_style = score.outdated ? "opacity: 0.7;" : "";
+
+                        if(index == 0){
+                            insert_html
                                 += '<div style="text-align: center; width: 100%;">'
                                 + '<div style="display: inline-block; margin: 3px; text-align: left;">'
-                                + '<table class="scoreLeader" style="margin-top: 10px;" cellpadding="0" cellspacing="0">'
+                                + '<table class="scoreLeader" style="margin-top: 10px;' + outdated_style + '" cellpadding="0" cellspacing="0">'
                                 + '<tr><td class="title" colspan=3>'
                                 + '<img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
                                 + ' <a href="/u/' + score.player_id + '"> '
@@ -262,27 +267,27 @@
                                 + '.png" /></td>'
                                 + '</tr>'
                                 + '<tr class="row2p"><td><strong>Max Combo</strong></td><td>' + score.combo + '</td></tr>';
-                                if(mode == 3){
-                                    insert_html
+                            if(mode == 3){
+                                insert_html
                                     += '<tr class="row1p"><td><strong>MAX / 300 / 200</strong></td><td>'
                                     + score.ngeki + ' / ' + score.n300 + ' / ' + score.nkatu + '</td></tr>'
                                     + '<tr class="row2p"><td><strong>100 / 50 / Misses</strong></td><td>'
                                     + score.n100 + ' / ' + score.n50 + ' / ' + score.nmiss + '</td></tr>';
-                                }else{
-                                    insert_html
+                            }else{
+                                insert_html
                                     += '<tr class="row1p"><td><strong>300 / 100 / 50</strong></td><td>'
                                     + score.n300 + ' / ' + score.n100 + ' / ' + score.n50 + '</td></tr>'
                                     + '<tr class="row2p"><td><strong>Misses</strong></td><td>' + score.nmiss + '</td></tr>'
                                     + '<tr class="row1p"><td><strong>Geki (Elite Beat!)</strong></td><td>' + score.ngeki + '</td></tr>'
                                     + '<tr class="row2p"><td><strong>';
-                                    if(mode == 2)
-                                        insert_html += 'Droplet misses';
-                                    else
-                                        insert_html += 'Katu (Beat!)';
-                                    insert_html
-                                    += '</strong></td><td>' + score.nkatu + '</td></tr>';
-                                }
+                                if(mode == 2)
+                                    insert_html += 'Droplet misses';
+                                else
+                                    insert_html += 'Katu (Beat!)';
                                 insert_html
+                                    += '</strong></td><td>' + score.nkatu + '</td></tr>';
+                            }
+                            insert_html
                                 += '<tr class="row1p"><td><strong>Mods</strong></td><td>' + mods_string(mods_array) + '</td></tr>'
                                 + '</table>'
                                 + '</div>'
@@ -298,69 +303,81 @@
                                 + '<th><strong>Accuracy</strong></th>'
                                 + '<th><strong>Player</strong></th>'
                                 + '<th><strong>Max Combo</th>';
-                                if(mode == 3){
-                                    insert_html
+                            if(mode == 3){
+                                insert_html
                                     += '<th><strong>MAX</strong></th>'
                                     + '<th><strong>300</strong></th>'
                                     + '<th><strong>200</strong></th>'
                                     + '<th><strong>100</strong></th>'
                                     + '<th><strong>50</strong></th>'
                                     + '<th><strong>Miss</strong></th>';
-                                }else{
-                                    insert_html
+                            }else{
+                                insert_html
                                     += '<th><strong>300 / 100 / 50</strong></th>'
                                     + '<th><strong>Geki</strong></th><th><strong>';
-                                    if(mode == 2)
-                                        insert_html += 'Droplet Miss';
-                                    else
-                                        insert_html += 'Katu';
-                                    insert_html
-                                    += '</strong></th><th><strong>Misses</strong></th>';
-                                }
+                                if(mode == 2)
+                                    insert_html += 'Droplet Miss';
+                                else
+                                    insert_html += 'Katu';
                                 insert_html
+                                    += '</strong></th><th><strong>Misses</strong></th>';
+                            }
+                            insert_html
                                 += '<th></th><th><strong>Mods</strong></th>'
                                 + '</tr>';
-                            }
+                        }
 
-                            insert_html += '<tr class="';
-                            if(index % 2 == 0)
-                                insert_html += 'row2p'
-                            else
-                                insert_html += 'row1p';
-                            insert_html
-                            += '">'
+                        insert_html += '<tr class="';
+                        if(index % 2 == 0)
+                            insert_html += 'row2p'
+                        else
+                            insert_html += 'row1p';
+                        insert_html
+                            += '" style="' + outdated_style + '">'
                             + '<td><span>#' + (index + 1) + '</span></td>'
                             + '<td><img src="//s.ppy.sh/images/'
                             + score.grade + '_small.png" /></td>'
                             + '<td><b>' + score.score.toLocaleString() + '</b></td>'
                             + '<td>' + score.accuracy.toFixed(2) + '%</td>'
-                            + '<td><div style="width: 16px; height: 11px; display: inline-block;"></div> '
-                            + '<img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
+                            + '<td><img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
                             + ' <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
                             + '<td>' + score.combo + '</td>';
-                            if(mode == 3){
-                                insert_html
+                        if(mode == 3){
+                            insert_html
                                 += '<td>' + score.ngeki + '</td>'
                                 + '<td>' + score.n300 + '</td>'
                                 + '<td>' + score.nkatu + '</td>'
                                 + '<td>' + score.n100 + '</td>'
                                 + '<td>' + score.n50 + '</td>'
-                            }else{
-                                insert_html
+                        }else{
+                            insert_html
                                 += '<td>' + score.n300 + '&nbsp&nbsp/&nbsp;&nbsp;' + score.n100 + '&nbsp;&nbsp;/&nbsp;&nbsp;' + score.n50 + '</td>'
                                 + '<td>' + score.ngeki + '</td>'
                                 + '<td>' + score.nkatu + '</td>'
-                            }
-                            insert_html
+                        }
+                        insert_html
                             += '<td>' + score.nmiss + '</td>'
                             + '<td>' + mods_string(mods_array) + '</td>'
                             + '<td style="opacity: 0; pointer-events: none;"><a>Report</a></td>'
                             + '</tr>';
-                        });
-                    }
+                    });
 
                     insert_html += '</table></div>';
                     $(insert_html).insertAfter(".paddingboth");
+
+                    if(showOutdated){
+                        $("#showOutdated").prop('checked', true);
+                    }
+
+                    $("#showOutdated").change(function(){
+                        if(this.checked){
+                            window.location.hash = "#showOutdated";
+                            location.reload();
+                        }else{
+                            window.location.hash = "";
+                            location.reload();
+                        }
+                    });
                 }
             }
         });
