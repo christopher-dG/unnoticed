@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -183,12 +184,39 @@ func readMap(f *os.File, v uint32) (*Beatmap, error) {
 	if err != nil {
 		return beatmap, err // If we return here, we're pretty much screwed.
 	}
-	size, err := readInt(f)
-	if err != nil {
-		return beatmap, err // This too.
-	}
-	defer f.Seek(start+int64(size)+4, 0)
 
+	// The MacOS osu!.db file doesn't have beatmap size fields, so rather than seeking,
+	// to start + size, we'll read the remaining fields and hope that we end up at the next
+	// map's start. However, if it turns out that this is not the norm, we'll give users a
+	// way to force the default parsing method via an environment variable (if this problem
+	// is indeed rare enough, we should instead always use the default method except in the
+	// presence of such an environment variable).
+	// See issue #9: https://github.com/christopher-dG/unnoticed/issues/9
+	var deferred func()
+	// There's no use error checking here, we can't do anything about it.
+	if runtime.GOOS == "darwin" && len(os.Getenv("UNNOTICED_FORCE_DEFAULT_PARSING")) == 0 {
+		deferred = func() {
+			f.Seek(2*INT+4*BYTE+1*SHORT+1*SINGLE+1*BYTE, 1)
+			readString(f)
+			readString(f)
+			f.Seek(1*SHORT, 1)
+			readString(f)
+			f.Seek(1*BYTE+1*LONG+1*BYTE, 1)
+			readString(f)
+			f.Seek(1*LONG+5*BYTE, 1)
+			if v < 20140609 {
+				f.Seek(1*SHORT, 1) // This is apparently of questionable type.
+			}
+			f.Seek(1*INT+1*BYTE, 1) // This int as well.
+		}
+	} else {
+		size, _ := readInt(f)
+		deferred = func() { f.Seek(start+int64(size)+4, 0) }
+	}
+
+	defer deferred()
+
+	// In the MacOS case where we don't know the size, error checking is unlikely to help.
 	if _, err = readString(f); err != nil {
 		return beatmap, err
 	}
