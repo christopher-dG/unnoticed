@@ -40,17 +40,15 @@ func main() {
 	scoresPath := path.Join(osuDir, "scores.db")
 	db, err := unnoticed.BuildDB(scoresPath, osuPath)
 	if err != nil {
-		unnoticed.Notify("Processing scores failed")
-		unnoticed.LogMsg(err)
+		unnoticed.LogMsgf("processing scores failed: %s", err)
 		done(logFile, 1)
 	}
 
 	if _, err := db.Upload(); err != nil {
-		unnoticed.Notify("Uploading scores failed")
-		unnoticed.LogMsg(err)
+		unnoticed.LogMsgf("uploading scores failed: %s", err)
 		done(logFile, 1)
 	}
-	unnoticed.Notify("Uploading scores succeeded")
+	unnoticed.LogMsg("uploading scores succeeded")
 	done(logFile, 0)
 }
 

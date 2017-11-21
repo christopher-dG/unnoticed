@@ -8,8 +8,6 @@ import (
 	"os/user"
 	"path"
 	"runtime"
-
-	"github.com/0xAX/notificator"
 )
 
 var (
@@ -59,23 +57,6 @@ func OsuDir() (string, error) {
 	}
 
 	return "", errors.New(".db files were not found")
-}
-
-// Notify sends a desktop notification with the given string.
-func Notify(msg string) {
-	LogMsg(msg)
-	notify := notificator.New(notificator.Options{
-		DefaultIcon: "",
-		AppName:     "Unnoticed",
-	})
-	if err := notify.Push("Unnoticed", msg, "", notificator.UR_NORMAL); err != nil {
-		LogMsgf("sending desktop notification failed: %s", err)
-	}
-}
-
-// Notifyf sends a desktop notification with the given formatted string.
-func Notifyf(format string, a ...interface{}) {
-	Notify(fmt.Sprintf(format, a...))
 }
 
 // LogSetup tries sto set up file logging with with fn.
