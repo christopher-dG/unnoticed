@@ -198,7 +198,7 @@
                         var exists = false;
 
                         scores.forEach(function(score_check, index){
-                            if(score_check.player_id == score.player_id && score_check.outdated == score.outdated){
+                            if(score_check.player_id == score.player_id){
                                 exists = true;
                                 if(score_check.score < score.score)
                                     scores[index] = score;
