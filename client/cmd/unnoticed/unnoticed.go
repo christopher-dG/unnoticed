@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/signal"
 	"path"
 
 	"github.com/christopher-dG/unnoticed"
 )
 
 func main() {
-	logFile := path.Join(os.TempDir(), "osu-watch.log")
+	logFile := path.Join(os.TempDir(), "unnoticed.log")
 	if f, err := unnoticed.LogSetup(logFile); err == nil {
 		defer f.Close()
 		unnoticed.LogMsgf("log file: %s", logFile)
@@ -23,7 +24,7 @@ func main() {
 		line, _, err := bufio.NewReader(os.Stdin).ReadLine()
 		fmt.Println()
 		if err != nil { // This should really not happen.
-			unnoticed.LogMsg("Error reading line")
+			unnoticed.LogMsg("error reading line")
 			done(logFile, 1)
 		}
 
@@ -39,10 +40,15 @@ func main() {
 	osuPath := path.Join(osuDir, "osu!.db")
 	scoresPath := path.Join(osuDir, "scores.db")
 
-	for {
-		unnoticed.LogMsgf("monitoring %s", scoresPath)
-		unnoticed.Watch(scoresPath)
+	// Exit by keyboard interrupt.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		done(logFile, 0)
+	}()
 
+	for {
 		db, err := unnoticed.BuildDB(scoresPath, osuPath)
 		if err != nil {
 			unnoticed.LogMsgf("processing scores failed: %s", err)
@@ -54,6 +60,10 @@ func main() {
 		} else {
 			unnoticed.LogMsg("uploading scores succeeded")
 		}
+
+		fmt.Println()
+		unnoticed.LogMsgf("monitoring %s, press Ctrl-C at any time to exit", scoresPath)
+		unnoticed.Watch(scoresPath)
 	}
 }
 
