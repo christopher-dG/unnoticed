@@ -1,6 +1,7 @@
 # [Unnoticed]
 
 [![Build Status](https://travis-ci.org/christopher-dG/unnoticed.svg?branch=master)](https://travis-ci.org/christopher-dG/unnoticed)
+[![Build Status](https://ci.appveyor.com/api/projects/status/1iwhwplhewp2t700/branch/master?svg=true)](https://ci.appveyor.com/project/christopher-dG/unnoticed/branch/master)
 [![Discord](https://img.shields.io/badge/Discord-[Unnoticed]-7289da.svg)](https://discord.gg/F8GqFMF)
 [![Userscript](https://img.shields.io/badge/osu!-Userscript-ff80d5.svg)](https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js)
 

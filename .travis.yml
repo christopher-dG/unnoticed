@@ -1,5 +1,8 @@
 language: go
 go: 1.9
+os:
+  - linux
+  - osx
 services: docker
 notifications:
   email: false
@@ -11,6 +14,14 @@ env:
   - STAGE=CLIENT
   - STAGE=API
   - STAGE=DISCORD
+matrix:
+  exclude:
+    - os: osx
+      env: STAGE=CLIENT
+    - os: osx
+      env: STAGE=API
+    - os: osx
+      env: STAGE=DISCORD
 before_install: mv client/* ./ && rmdir client
 script: ./.travis/build.sh
 after_success: ./.travis/deploy.sh

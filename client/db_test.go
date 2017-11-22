@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"path"
+	"runtime"
 	"testing"
 )
 
 // TestDB tests database generation and JSON marshalling.
 // This covers everything in parsing and a bunch of stuff in types.
 func TestDB(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		return
+	}
 	db, err := BuildDB(
 		path.Join("testdata", "scores.db"),
 		path.Join("testdata", "osu!.db"),
@@ -37,5 +41,28 @@ func TestDB(t *testing.T) {
 	}
 	if string(out) != string(expected) {
 		t.Error("JSON output differs from expected value")
+	}
+}
+
+// TestDarwin tests MacOS's slightly modified parsing algorithm. See #9.
+func TestDarwin(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		return
+	}
+	db, err := BuildDB(
+		path.Join("testdata", "scores_darwin.db"),
+		path.Join("testdata", "osu!_darwin.db"),
+	)
+	if err != nil {
+		t.Errorf("Expected err == nil, got '%s'", err)
+	}
+	if db.Username != "Raspberriel" {
+		t.Errorf("Expected db.Username == 'Raspberriel', got '%s'", db.Username)
+	}
+	if len(db.Scores) != 6226 {
+		t.Errorf("Expected len(db.Scores) == 6226, got %d", len(db.Scores))
+	}
+	if len(db.Beatmaps) != 3220 {
+		t.Errorf("Expected len(db.Beatmaps) == 3220, got %d", len(db.Beatmaps))
 	}
 }
