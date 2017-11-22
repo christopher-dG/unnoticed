@@ -63,7 +63,9 @@ func main() {
 
 		fmt.Println()
 		unnoticed.LogMsgf("monitoring %s, press Ctrl-C at any time to exit", scoresPath)
-		unnoticed.Watch(scoresPath)
+		if err = unnoticed.Watch(scoresPath); err != nil {
+			unnoticed.LogMsg("file monitoring failed, uploading scores just in case")
+		}
 	}
 }
 

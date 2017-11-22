@@ -82,14 +82,3 @@ func LogMsg(msg interface{}) {
 func LogMsgf(format string, a ...interface{}) {
 	LogMsg(fmt.Sprintf(format, a...))
 }
-
-// LoFatal logs a fatal error and exits.
-func LogFatal(msg interface{}) {
-	LogMsg(msg)
-	os.Exit(1)
-}
-
-// LogFatalf logs a formatted fatal error and exits.
-func LogFatalf(format string, a ...interface{}) {
-	LogFatal(fmt.Sprintf(format, a...))
-}
