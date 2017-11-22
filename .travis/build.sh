@@ -7,6 +7,7 @@ set -e
 case $STAGE in
 
     'TEST' )
+        export PATH=$HOME/Library/Python/2.7/bin:$PATH  # For MacOS.
         pip install awscli --user
         aws configure set region us-east-1
         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID

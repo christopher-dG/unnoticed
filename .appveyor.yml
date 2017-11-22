@@ -1,0 +1,22 @@
+platform:
+  - x86
+  - x64
+environment:
+  GOPATH: c:\gopath
+  PATH: c:\gopath\bin;c:\go\bin;%PATH%
+  AWS_ACCESS_KEY_ID:
+    secure: DZdcB2ENXINjdwTKgmKI25qzdl6YszreNXqrPiATlo8=
+  AWS_SECRET_ACCESS_KEY:
+    secure: nPCG/woLtHPy1O8VvnA7AKK/3+8vVspiTtLCRvFYEDV3dnNBxZIk6YMrLep0CYMu
+clone_folder: c:\gopath\src\github.com\christopher-dG\unnoticed
+install:
+  - pip install awscli --user
+  - aws configure set region us-east-1
+  - aws configure set aws_access_key_id %AWS_ACCESS_KEY_ID%
+  - aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
+  - aws s3 sync s3://unnoticed-test ./testdata
+before_build:
+  - ps: mv client/* ./
+  - ps: rmdir client
+build_script: go build
+test_script: go test
