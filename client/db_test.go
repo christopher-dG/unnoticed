@@ -12,7 +12,7 @@ import (
 // This covers everything in parsing and a bunch of stuff in types.
 func TestDB(t *testing.T) {
 	if runtime.GOOS == "darwin" {
-		return
+		t.SkipNow()
 	}
 	db, err := BuildDB(
 		path.Join("testdata", "scores.db"),
@@ -47,7 +47,7 @@ func TestDB(t *testing.T) {
 // TestDarwin tests MacOS's slightly modified parsing algorithm. See #9.
 func TestDarwin(t *testing.T) {
 	if runtime.GOOS != "darwin" {
-		return
+		t.SkipNow()
 	}
 	db, err := BuildDB(
 		path.Join("testdata", "scores_darwin.db"),

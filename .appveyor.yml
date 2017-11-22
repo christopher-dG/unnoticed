@@ -19,4 +19,4 @@ before_build:
   - ps: mv client/* ./
   - ps: rmdir client
 build_script: go build
-test_script: go test
+test_script: go test -v -cover

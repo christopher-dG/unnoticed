@@ -4,37 +4,29 @@ import (
 	"crypto/md5"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 )
 
 // Watch waits until fn is modified.
-func Watch(fn string) {
-	path, err := filepath.Abs(fn)
-	if err != nil {
-		LogMsg(err)
-		path = fn
-	}
-
-	initHash, err := getHash(path)
+func Watch(fn string) error {
+	initHash, err := getHash(fn)
 	if err != nil {
 		// This shouldn't happen, but if it does then wait a
 		// bit before returning to avoid spamming my API.
-		LogMsg(err)
-		LogMsgf("Couldn't get initial hash value for %s", path)
+		LogMsgf("couldn't get initial hash value for %s; idling for 1 minute", fn)
 		time.Sleep(time.Minute)
-		return
+		return err
 	}
 
 	for {
-		hash, err := getHash(path)
+		hash, err := getHash(fn)
 		if err != nil {
 			LogMsg(err)
 		} else if string(hash) != string(initHash) {
-			LogMsgf("%s was modified", path)
-			return
+			LogMsgf("%s was modified", fn)
+			return nil
 		}
-		time.Sleep(time.Second * 10)
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -42,13 +34,13 @@ func Watch(fn string) {
 func getHash(fn string) ([]byte, error) {
 	f, err := os.Open(fn)
 	if err != nil {
-		LogMsgf("reading %s failed", fn)
+		LogMsgf("reading %s failed: %s", fn, err)
 		return nil, err
 	}
 	defer f.Close()
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
-		LogMsgf("computing the hash for %s failed", fn)
+		LogMsgf("computing the hash for %s failed: %s", fn, err)
 		return nil, err
 	} else {
 		return h.Sum(nil), nil
