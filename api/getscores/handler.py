@@ -84,8 +84,9 @@ def handler(event, _):
             ) = score[:-1]
             d["outdated"] = map_hash != score[-1]
             d["pp"] = get_pp(
-                map_id, d["mode"], d["mods"], d["combo"], d["n300"],
-                d["n100"], d["n50"], d["ngeki"], d["nkatu"], d["nmiss"],
+                map_id, d["mode"], d["score"], d["mods"], d["combo"],
+                d["n300"], d["n100"], d["n50"], d["ngeki"], d["nkatu"],
+                d["nmiss"],
             )
 
             body["scores"][map_id].append(d)
@@ -119,7 +120,9 @@ def get_hash(map_id):
         return None
 
 
-def get_pp(map_id, mode, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
+def get_pp(
+        map_id, mode, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss,
+):
     """Get pp for a play."""
     if mode == 0:
         return std(map_id, mods, combo, n300, n100, n50, nmiss)
@@ -128,7 +131,9 @@ def get_pp(map_id, mode, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
     elif mode == 2:
         return ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss)
     elif mode == 3:
-        return mania(map_id, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss)
+        return mania(
+            map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss,
+        )
     else:
         return None
 
@@ -137,12 +142,12 @@ def std(map_id, mods, combo, n300, n100, n50, nmiss):
     """Get pp for a Standard play."""
     osu = "%d.osu" % map_id
     url = "https://osu.ppy.sh/osu/%s" % map_id
-    response = requests.get(url)
-    if response.status_code != 200:
-        print("Download failed")
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("Download failed (%d)" % r.status_code)
         return None
     with open(osu, "w") as f:
-        f.write(response.text)
+        f.write(r.text)
     parser = pyttanko.parser()
     with open(osu) as f:
         bmap = parser.map(f)
@@ -163,6 +168,64 @@ def ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss):
     return None
 
 
-def mania(map_id, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
+def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
     """Get pp for a Mania play."""
-    return None
+    if mods & 72 or mods & 256:  # DT/HT.
+        return None  # TODO: Calculate modded SR.
+
+    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&m=3&a=1&limit=1" % (
+        os.environ["OSU_API_KEY"], map_id)
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("API request failed (%d)" % r.statusCode)
+        return None
+    body = json.loads(r.content)
+    if not body:
+        print("API request returned empty")
+        return None
+    try:
+        sr = body[0]["difficultyrating"]
+        od = body[0]["diff_overall"]
+    except KeyError:
+        print("API response is missing difficultyrating diff_overall or  key")
+        return None
+
+    # Get the number of hit objects.
+    url = "https://osu.ppy.sh/osu/%s" % map_id
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("Download failed (%d)", r.status_code)
+        return None
+    for i, line in enumerate(r.text.split("\n")):
+        if "[HitObjects]" in line:
+            break
+    else:
+        print("HitObjects section was not found")
+        return None
+    for j, line in enumerate(r.text.split("\n")[i + 1:]):
+        if not line:
+            break
+    nobjs = j
+
+    acc = (ngeki + n300 + 2 * nkatu / 3 + n100/3 + n50/6) / \
+          (ngeki + n300 + nkatu + n100 + n50 + nmiss)
+
+    # The following is translated almost directly from the code in #12.
+    f = 64 - 3 * od
+    k = 2.5 * pow((150 / f) * pow(acc, 16), 1.8) * \
+        min(1.15, pow(nobjs / 1500, 0.3))
+    l = (pow(5 * max(1, sr / 0.0825) - 4, 3) / 110000) * \
+        (1 + 0.1 * min(1, nobjs / 1500))
+    if score < 500000:
+        m = score / 500000 * 0.1
+    elif score < 600000:
+        m = (score - 500000) / 100000 * 0.2 + 0.1
+    elif score < 700000:
+        m = (score - 600000) / 100000 * 0.35 + 0.3
+    elif score < 800000:
+        m = (score - 700000) / 100000 * 0.2 + 0.65
+    elif score < 900000:
+        m = (score - 800000) / 100000 * 0.1 + 0.85
+    else:
+        m = (score - 900000) / 100000 * 0.05 + 0.95
+    return pow(pow(k, 1.1) + pow(l * m, 1.1), 1 / 1.1) * 1.1
