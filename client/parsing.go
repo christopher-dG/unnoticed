@@ -149,7 +149,7 @@ func readScore(f *os.File) (score *Score, err error) {
 }
 
 // readScores reads all scores for one map.
-func readScores(f *os.File) ([]*Score, error) {
+func readScores(f *os.File, nMap uint32) ([]*Score, error) {
 	scores := []*Score{}
 	md5, err := readString(f)
 	if err != nil {
@@ -162,7 +162,7 @@ func readScores(f *os.File) ([]*Score, error) {
 
 	for i := uint32(1); i <= nScores; i++ {
 		if score, err := readScore(f); err != nil {
-			LogMsgf("score %d: %s", i, err)
+			LogMsgf("scores.db score %d on map %d: %s", i, nMap, err)
 		} else {
 			scores = append(scores, score)
 		}
@@ -329,7 +329,7 @@ func osuDB(fn string) (string, []*Beatmap, error) {
 				// so don't spam the log file.
 				zeros++
 			} else {
-				LogMsgf("map %d: %s", i, err)
+				LogMsgf("osu!.db map %d: %s", i, err)
 			}
 		} else {
 			beatmaps = append(beatmaps, beatmap)
@@ -367,8 +367,8 @@ func scoresDB(fn string) ([]*Score, error) {
 	LogMsgf("scores.db contains %d beatmaps", nMaps)
 
 	for i := uint32(1); i <= nMaps; i++ {
-		if mapScores, err := readScores(f); err != nil {
-			LogMsgf("score %d: %s", err)
+		if mapScores, err := readScores(f, i); err != nil {
+			LogMsgf("scores.db map %d: %s", err)
 		} else {
 			for _, score := range mapScores {
 				scores = append(scores, score)
