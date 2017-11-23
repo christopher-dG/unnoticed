@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import psycopg2
 import pyttanko
@@ -116,7 +117,7 @@ def get_hash(map_id):
     try:
         return body[0]["file_md5"]
     except KeyError:
-        print("API response is missing file_md5 key")
+        print("API response is missing a required key")
         return None
 
 
@@ -165,7 +166,41 @@ def taiko(map_id, mods, combo, n300, n100, nmiss):
 
 def ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss):
     """Get pp for a CTB play."""
-    return None
+    if mods & 2 or mods & 16 or mods & 64 or mods & 256:  # EZ/HR/DT/HT.
+        return None  # TODO: Mods.
+
+    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&m=2&a=1&limit=1" % (
+        os.environ["OSU_API_KEY"], map_id)
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("API request failed (%d)" % r.statusCode)
+        return None
+    body = json.loads(r.content)
+    if not body:
+        print("API request returned empty")
+        return None
+    try:
+        sr = body[0]["difficultyrating"]
+        ar = body[0]["diff_approach"]
+        max_combo = body[0]["max_combo"]
+    except KeyError:
+        print("API response is missing a required key")
+        return None
+
+    acc = (n300 + n100 + n50) / (n300 + n100 + n50 + nkatu + nmiss)
+
+    # The following is translated almost directly from the code in #12.
+    pp = pow(((5 * sr / 0.0049) - 4), 2) / 100000
+    length_bonus = 0.95 + 0.4 * min(1.0, max_combo / 3000.0)
+    if max_combo > 3000:
+        length_bonus += math.log10(max_combo / 3000) * 0.5
+    pp *= length_bonus
+    pp *= pow(0.97, nmiss)
+    pp *= pow(combo / max_combo, 0.8)
+    if ar > 9:
+        pp *= 1 + 0.1 * (ar - 9)
+    pp *= pow(acc, 5.5)
+    return pp
 
 
 def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
@@ -187,7 +222,7 @@ def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
         sr = body[0]["difficultyrating"]
         od = body[0]["diff_overall"]
     except KeyError:
-        print("API response is missing difficultyrating diff_overall or  key")
+        print("API response is missing a required key")
         return None
 
     # Get the number of hit objects.
