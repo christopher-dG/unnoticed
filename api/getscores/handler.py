@@ -1,6 +1,7 @@
 import json
 import os
 import psycopg2
+import pyttanko
 import requests
 
 
@@ -82,6 +83,11 @@ def handler(event, _):
                 d["combo"], d["fc"], d["mods"], d["date"], d["flag"],
             ) = score[:-1]
             d["outdated"] = map_hash != score[-1]
+            d["pp"] = get_pp(
+                map_id, d["mode"], d["mods"], d["combo"], d["n300"],
+                d["n100"], d["n50"], d["ngeki"], d["nkatu"], d["nmiss"],
+            )
+
             body["scores"][map_id].append(d)
             body["nscores"] += 1
 
@@ -111,3 +117,52 @@ def get_hash(map_id):
     except KeyError:
         print("API response is missing file_md5 key")
         return None
+
+
+def get_pp(map_id, mode, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
+    """Get pp for a play."""
+    if mode == 0:
+        return std(map_id, mods, combo, n300, n100, n50, nmiss)
+    if mode == 1:
+        return taiko(map_id, mods, combo, n300, n100, nmiss)
+    elif mode == 2:
+        return ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss)
+    elif mode == 3:
+        return mania(map_id, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss)
+    else:
+        return None
+
+
+def std(map_id, mods, combo, n300, n100, n50, nmiss):
+    """Get pp for a Standard play."""
+    osu = "%d.osu" % map_id
+    url = "https://osu.ppy.sh/osu/%s" % map_id
+    response = requests.get(url)
+    if response.status_code != 200:
+        print("Download failed")
+        return None
+    with open(osu, "w") as f:
+        f.write(response.text)
+    parser = pyttanko.parser()
+    with open(osu) as f:
+        bmap = parser.map(f)
+    stars = pyttanko.diff_calc().calc(bmap, mods)
+    return pyttanko.ppv2(
+        aim_stars=stars.aim, speed_stars=stars.speed, mods=mods, combo=combo,
+        n300=n300, n100=n100, n50=n50, nmiss=nmiss, bmap=bmap,
+    )[0]
+
+
+def taiko(map_id, mods, combo, n300, n100, nmiss):
+    """Get pp for a Taiko play."""
+    return None  # https://github.com/Francesco149/pyttanko/issues/1
+
+
+def ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss):
+    """Get pp for a CTB play."""
+    return None
+
+
+def mania(map_id, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
+    """Get pp for a Mania play."""
+    return None
