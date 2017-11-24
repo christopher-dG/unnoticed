@@ -6,6 +6,8 @@ import psycopg2
 import pyttanko
 import requests
 
+beatmap = None  # Text of a .osu file.
+
 
 def handler(event, _):
     """Retrieve scores for given beatmaps."""
@@ -66,6 +68,7 @@ def handler(event, _):
 
     cur = conn.cursor()
 
+    global beatmap
     for map_id in set(map_ids):
         # The map_id key here will be converted to a string, unfortunately.
         body["scores"][map_id] = []
@@ -93,6 +96,8 @@ def handler(event, _):
 
             body["scores"][map_id].append(d)
             body["nscores"] += 1
+
+        beatmap = None  # Make sure the next beatmap gets downloaded.
 
     response["statusCode"] = 200
     body["error"] = ""
@@ -142,14 +147,18 @@ def get_pp(
 
 def std(map_id, mods, combo, n300, n100, n50, nmiss):
     """Get pp for a Standard play."""
-    osu = "%d.osu" % map_id
-    url = "https://osu.ppy.sh/osu/%s" % map_id
-    r = requests.get(url)
-    if r.status_code != 200:
-        print("Download failed (%d)" % r.status_code)
-        return None
+    global beatmap
+    if not beatmap:  # We want to avoid downloading the beatmap for each score.
+        osu = "%d.osu" % map_id
+        url = "https://osu.ppy.sh/osu/%s" % map_id
+        r = requests.get(url)
+        if r.status_code != 200:
+            print("Download failed (%d)" % r.status_code)
+            return None
+        beatmap = r.text
+
     parser = pyttanko.parser()
-    with io.StringIO(r.text) as f:
+    with io.StringIO(beatmap) as f:
         bmap = parser.map(f)
     stars = pyttanko.diff_calc().calc(bmap, mods)
     return pyttanko.ppv2(
@@ -225,18 +234,22 @@ def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
         return None
 
     # Get the number of hit objects.
-    url = "https://osu.ppy.sh/osu/%s" % map_id
-    r = requests.get(url)
-    if r.status_code != 200:
-        print("Download failed (%d)", r.status_code)
-        return None
-    for i, line in enumerate(r.text.split("\n")):
+    global beatmap
+    if not beatmap:
+        url = "https://osu.ppy.sh/osu/%s" % map_id
+        r = requests.get(url)
+        if r.status_code != 200:
+            print("Download failed (%d)", r.status_code)
+            return None
+        beatmap = r.text
+
+    for i, line in enumerate(beatmap.split("\n")):
         if "[HitObjects]" in line:
             break
     else:
         print("HitObjects section was not found")
         return None
-    for j, line in enumerate(r.text.split("\n")[i + 1:]):
+    for j, line in enumerate(beatmap.split("\n")[i + 1:]):
         if not line:
             break
     nobjs = j
