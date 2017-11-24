@@ -1,3 +1,4 @@
+import io
 import json
 import math
 import os
@@ -127,7 +128,7 @@ def get_pp(
     """Get pp for a play."""
     if mode == 0:
         return std(map_id, mods, combo, n300, n100, n50, nmiss)
-    if mode == 1:
+    elif mode == 1:
         return taiko(map_id, mods, combo, n300, n100, nmiss)
     elif mode == 2:
         return ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss)
@@ -147,10 +148,8 @@ def std(map_id, mods, combo, n300, n100, n50, nmiss):
     if r.status_code != 200:
         print("Download failed (%d)" % r.status_code)
         return None
-    with open(osu, "w") as f:
-        f.write(r.text)
     parser = pyttanko.parser()
-    with open(osu) as f:
+    with io.StringIO(r.text) as f:
         bmap = parser.map(f)
     stars = pyttanko.diff_calc().calc(bmap, mods)
     return pyttanko.ppv2(
@@ -180,9 +179,9 @@ def ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss):
         print("API request returned empty")
         return None
     try:
-        sr = body[0]["difficultyrating"]
-        ar = body[0]["diff_approach"]
-        max_combo = body[0]["max_combo"]
+        sr = float(body[0]["difficultyrating"])
+        ar = float(body[0]["diff_approach"])
+        max_combo = int(body[0]["max_combo"])
     except KeyError:
         print("API response is missing a required key")
         return None
@@ -219,8 +218,8 @@ def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
         print("API request returned empty")
         return None
     try:
-        sr = body[0]["difficultyrating"]
-        od = body[0]["diff_overall"]
+        sr = float(body[0]["difficultyrating"])
+        od = float(body[0]["diff_overall"])
     except KeyError:
         print("API response is missing a required key")
         return None
