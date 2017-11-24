@@ -6,8 +6,6 @@ import psycopg2
 import pyttanko
 import requests
 
-beatmap = None  # Text of a .osu file.
-
 
 def handler(event, _):
     """Retrieve scores for given beatmaps."""
@@ -68,7 +66,6 @@ def handler(event, _):
 
     cur = conn.cursor()
 
-    global beatmap
     for map_id in set(map_ids):
         # The map_id key here will be converted to a string, unfortunately.
         body["scores"][map_id] = []
@@ -80,7 +77,19 @@ def handler(event, _):
         """ % map_id
         cur.execute(sql)
 
-        for score in cur.fetchall():
+        scores = cur.fetchall()
+        map_dicts = [{}] * 4
+        for i in range(4):
+            if i != 0 and i != 1 and any(score[1] == i for score in scores):
+                map_dicts[i] = get_beatmap_api(map_id, i)
+        if any(s[1] == 0 or s[1] == 3 for s in scores):
+            map_text = get_osu(map_id)
+        else:
+            map_text = ""
+        for i in range(4):
+            map_dicts[i]["text"] = map_text
+
+        for score in scores:
             d = {}
             (
                 d["player_id"], d["mode"], d["player"], d["n300"], d["n100"],
@@ -89,15 +98,13 @@ def handler(event, _):
             ) = score[:-1]
             d["outdated"] = map_hash != score[-1]
             d["pp"] = get_pp(
-                map_id, d["mode"], d["score"], d["mods"], d["combo"],
-                d["n300"], d["n100"], d["n50"], d["ngeki"], d["nkatu"],
-                d["nmiss"],
+                map_id, map_dicts[d["mode"]], d["mode"], d["score"], d["mods"],
+                d["combo"], d["n300"], d["n100"], d["n50"], d["ngeki"], 
+                d["nkatu"], d["nmiss"],
             )
 
             body["scores"][map_id].append(d)
             body["nscores"] += 1
-
-        beatmap = None  # Make sure the next beatmap gets downloaded.
 
     response["statusCode"] = 200
     body["error"] = ""
@@ -109,56 +116,38 @@ def handler(event, _):
 
 def get_hash(map_id):
     """Get the MD5 hash of a beatmap's most recent version."""
-    print("Requesting beatmap %d" % map_id)
-    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&l=1" % (
-        os.environ["OSU_API_KEY"], map_id)
-    r = requests.get(url)
-    if r.status_code != 200:
-        print("API request failed (%d)" % r.statusCode)
+    beatmap = get_beatmap_api(map_id)
+    md5 = beatmap.get("file_md5")
+    if not md5:
+        print("file_md5 key is missing")
         return None
-    body = json.loads(r.content)
-    if not body:
-        print("API request returned empty")
-        return None
-    try:
-        return body[0]["file_md5"]
-    except KeyError:
-        print("API response is missing a required key")
-        return None
+    return md5
 
 
 def get_pp(
-        map_id, mode, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss,
+        map_id, beatmap, mode, score, mods, combo, n300, n100, n50, ngeki, 
+        nkatu, nmiss,
 ):
     """Get pp for a play."""
     if mode == 0:
-        return std(map_id, mods, combo, n300, n100, n50, nmiss)
+        return std(map_id, beatmap, mods, combo, n300, n100, n50, nmiss)
     elif mode == 1:
-        return taiko(map_id, mods, combo, n300, n100, nmiss)
+        return taiko(map_id, beatmap, mods, combo, n300, n100, nmiss)
     elif mode == 2:
-        return ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss)
+        return ctb(map_id, beatmap, mods, combo, n300, n100, n50, nkatu, nmiss)
     elif mode == 3:
         return mania(
-            map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss,
+            map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu,
+            nmiss,
         )
     else:
         return None
 
 
-def std(map_id, mods, combo, n300, n100, n50, nmiss):
+def std(map_id, beatmap, mods, combo, n300, n100, n50, nmiss):
     """Get pp for a Standard play."""
-    global beatmap
-    if not beatmap:  # We want to avoid downloading the beatmap for each score.
-        osu = "%d.osu" % map_id
-        url = "https://osu.ppy.sh/osu/%s" % map_id
-        r = requests.get(url)
-        if r.status_code != 200:
-            print("Download failed (%d)" % r.status_code)
-            return None
-        beatmap = r.text
-
     parser = pyttanko.parser()
-    with io.StringIO(beatmap) as f:
+    with io.StringIO(beatmap["text"]) as f:
         bmap = parser.map(f)
     stars = pyttanko.diff_calc().calc(bmap, mods)
     return pyttanko.ppv2(
@@ -167,32 +156,21 @@ def std(map_id, mods, combo, n300, n100, n50, nmiss):
     )[0]
 
 
-def taiko(map_id, mods, combo, n300, n100, nmiss):
+def taiko(map_id, beatmap, mods, combo, n300, n100, nmiss):
     """Get pp for a Taiko play."""
     return None  # https://github.com/Francesco149/pyttanko/issues/1
 
 
-def ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss):
+def ctb(map_id, beatmap, mods, combo, n300, n100, n50, nkatu, nmiss):
     """Get pp for a CTB play."""
     if mods & 2 or mods & 16 or mods & 64 or mods & 256:  # EZ/HR/DT/HT.
         return None  # TODO: Mods.
 
-    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&m=2&a=1&limit=1" % (
-        os.environ["OSU_API_KEY"], map_id)
-    r = requests.get(url)
-    if r.status_code != 200:
-        print("API request failed (%d)" % r.statusCode)
-        return None
-    body = json.loads(r.content)
-    if not body:
-        print("API request returned empty")
-        return None
-    try:
-        sr = float(body[0]["difficultyrating"])
-        ar = float(body[0]["diff_approach"])
-        max_combo = int(body[0]["max_combo"])
-    except KeyError:
-        print("API response is missing a required key")
+    sr = float(beatmap.get("difficultyrating", -1.0))
+    ar = float(beatmap.get("diff_approach", -1.0))
+    max_combo = int(beatmap.get("max_combo", -1))
+    if sr == -1.0 or ar == -1.0 or max_combo == -1:
+        print("difficultyrating, diff_approach, or max_combo is missing")
         return None
 
     acc = (n300 + n100 + n50) / (n300 + n100 + n50 + nkatu + nmiss)
@@ -211,45 +189,24 @@ def ctb(map_id, mods, combo, n300, n100, n50, nkatu, nmiss):
     return pp
 
 
-def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
+def mania(map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
     """Get pp for a Mania play."""
     if mods & 72 or mods & 256:  # DT/HT.
         return None  # TODO: Calculate modded SR.
 
-    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&m=3&a=1&limit=1" % (
-        os.environ["OSU_API_KEY"], map_id)
-    r = requests.get(url)
-    if r.status_code != 200:
-        print("API request failed (%d)" % r.statusCode)
-        return None
-    body = json.loads(r.content)
-    if not body:
-        print("API request returned empty")
-        return None
-    try:
-        sr = float(body[0]["difficultyrating"])
-        od = float(body[0]["diff_overall"])
-    except KeyError:
-        print("API response is missing a required key")
+    sr = float(beatmap.get("difficultyrating", -1.0))
+    od = float(beatmap.get("diff_overall", -1.0))
+    if sr == -1.0 or od == -1.0:
+        print("difficultyrating or diff_overall is missing")
         return None
 
-    # Get the number of hit objects.
-    global beatmap
-    if not beatmap:
-        url = "https://osu.ppy.sh/osu/%s" % map_id
-        r = requests.get(url)
-        if r.status_code != 200:
-            print("Download failed (%d)", r.status_code)
-            return None
-        beatmap = r.text
-
-    for i, line in enumerate(beatmap.split("\n")):
+    for i, line in enumerate(beatmap["text"].split("\n")):
         if "[HitObjects]" in line:
             break
     else:
         print("HitObjects section was not found")
         return None
-    for j, line in enumerate(beatmap.split("\n")[i + 1:]):
+    for j, line in enumerate(beatmap["text"].split("\n")[i + 1:]):
         if not line:
             break
     nobjs = j
@@ -276,3 +233,33 @@ def mania(map_id, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
     else:
         m = (score - 900000) / 100000 * 0.05 + 0.95
     return pow(pow(k, 1.1) + pow(l * m, 1.1), 1 / 1.1) * 1.1
+
+
+def get_osu(map_id):
+    """Get the text of a .osu file."""
+    print("Downloading map %d" % map_id)
+    url = "https://osu.ppy.sh/osu/%d" % map_id
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("Response returned %d" % r.status_code)
+        return None
+    return r.text
+
+
+def get_beatmap_api(map_id, mode=None):
+    """Get a beatmap dict from the osu! API."""
+    print("Requesting beatmap %d for mode %s" % (map_id, mode))
+    url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&a=1&limit=1" % (
+        os.environ["OSU_API_KEY"], map_id)
+    if mode is not None:
+        url += "&m=%d" % mode
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("Response returned %d" % r.statusCode)
+        return None
+    body = json.loads(r.content)
+    if not body:
+        print("API request returned empty")
+        return None
+    return body[0]
+    
