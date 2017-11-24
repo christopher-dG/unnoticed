@@ -6,6 +6,8 @@ import psycopg2
 import pyttanko
 import requests
 
+api_resp = {}  # Cached API response.
+
 
 def handler(event, _):
     """Retrieve scores for given beatmaps."""
@@ -76,18 +78,17 @@ def handler(event, _):
         scores.player_id = players.id where map = %d\
         """ % map_id
         cur.execute(sql)
-
         scores = cur.fetchall()
+        cur.close()
+
         map_dicts = [{}] * 4
         for i in range(4):
             if i != 0 and i != 1 and any(score[1] == i for score in scores):
-                map_dicts[i] = get_beatmap_api(map_id, i)
-        if any(s[1] == 0 or s[1] == 3 for s in scores):
-            map_text = get_osu(map_id)
-        else:
-            map_text = ""
-        for i in range(4):
-            map_dicts[i]["text"] = map_text
+                map_dicts[i] = get_beatmap_api(map_id, mode=i)
+        if any(s[1] == 0 for s in scores):
+            map_dicts[0]["text"] = get_osu_text(map_id)
+        if any(s[1] == 3 for s in scores):
+            map_dicts[3]["hitobjects"] = mania_hitobjects(get_osu_text(map_id))
 
         for score in scores:
             d = {}
@@ -146,6 +147,8 @@ def get_pp(
 
 def std(map_id, beatmap, mods, combo, n300, n100, n50, nmiss):
     """Get pp for a Standard play."""
+    if not beatmap["text"]:
+        return None
     parser = pyttanko.parser()
     with io.StringIO(beatmap["text"]) as f:
         bmap = parser.map(f)
@@ -191,6 +194,9 @@ def ctb(map_id, beatmap, mods, combo, n300, n100, n50, nkatu, nmiss):
 
 def mania(map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
     """Get pp for a Mania play."""
+    nobjs = beatmap["hitobjects"]
+    if nobjs is None:
+        return None
     if mods & 72 or mods & 256:  # DT/HT.
         return None  # TODO: Calculate modded SR.
 
@@ -199,17 +205,6 @@ def mania(map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu, nm
     if sr == -1.0 or od == -1.0:
         print("difficultyrating or diff_overall is missing")
         return None
-
-    for i, line in enumerate(beatmap["text"].split("\n")):
-        if "[HitObjects]" in line:
-            break
-    else:
-        print("HitObjects section was not found")
-        return None
-    for j, line in enumerate(beatmap["text"].split("\n")[i + 1:]):
-        if not line:
-            break
-    nobjs = j
 
     acc = (ngeki + n300 + 2 * nkatu / 3 + n100/3 + n50/6) / \
           (ngeki + n300 + nkatu + n100 + n50 + nmiss)
@@ -235,7 +230,7 @@ def mania(map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu, nm
     return pow(pow(k, 1.1) + pow(l * m, 1.1), 1 / 1.1) * 1.1
 
 
-def get_osu(map_id):
+def get_osu_text(map_id):
     """Get the text of a .osu file."""
     print("Downloading map %d" % map_id)
     url = "https://osu.ppy.sh/osu/%d" % map_id
@@ -246,8 +241,29 @@ def get_osu(map_id):
     return r.text
 
 
+def mania_hitobjects(text):
+    """Get the number of hitobjects from the text of a .osu file."""
+    if not text:
+        return None
+    for i, line in enumerate(text.split("\n")):
+        if "[HitObjects]" in line:
+            break
+    else:
+        print("HitObjects section was not found")
+        return None
+    for j, line in enumerate(text.split("\n")[i + 1:]):
+        if not line:
+            break
+    return j
+
+
 def get_beatmap_api(map_id, mode=None):
     """Get a beatmap dict from the osu! API."""
+    global api_resp
+    if api_resp.get("beatmap_id") == str(map_id) and \
+       (mode is None or api_resp.get("mode") == str(mode)):
+        return api_resp
+
     print("Requesting beatmap %d for mode %s" % (map_id, mode))
     url = "https://osu.ppy.sh/api/get_beatmaps?k=%s&b=%d&a=1&limit=1" % (
         os.environ["OSU_API_KEY"], map_id)
@@ -255,11 +271,12 @@ def get_beatmap_api(map_id, mode=None):
         url += "&m=%d" % mode
     r = requests.get(url)
     if r.status_code != 200:
-        print("Response returned %d" % r.statusCode)
+        print("API request returned %d" % r.statusCode)
         return None
     body = json.loads(r.content)
     if not body:
         print("API request returned empty")
         return None
-    return body[0]
-    
+
+    api_resp = body[0]
+    return api_resp
