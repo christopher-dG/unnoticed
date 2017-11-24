@@ -87,6 +87,8 @@ def handler(event, _):
                 map_dicts[i] = get_beatmap_api(map_id, mode=i)
         if any(s[1] == 0 for s in scores):
             map_dicts[0]["text"] = get_osu_text(map_id)
+        if any(s[1] == 2 for s in scores):
+            map_dicts[2]["max_combo"] = ctb_max_combo(map_id, scores)
         if any(s[1] == 3 for s in scores):
             map_dicts[3]["hitobjects"] = mania_hitobjects(get_osu_text(map_id))
 
@@ -168,10 +170,12 @@ def ctb(map_id, beatmap, mods, combo, n300, n100, n50, nkatu, nmiss):
     """Get pp for a CTB play."""
     if mods & 2 or mods & 16 or mods & 64 or mods & 256:  # EZ/HR/DT/HT.
         return None  # TODO: Mods.
+    max_combo = beatmap["max_combo"]
+    if not max_combo:
+        return None
 
     sr = float(beatmap.get("difficultyrating", -1.0))
     ar = float(beatmap.get("diff_approach", -1.0))
-    max_combo = int(beatmap.get("max_combo", -1))
     if sr == -1.0 or ar == -1.0 or max_combo == -1:
         print("difficultyrating, diff_approach, or max_combo is missing")
         return None
@@ -239,6 +243,17 @@ def get_osu_text(map_id):
         print("Response returned %d" % r.status_code)
         return None
     return r.text
+
+
+def ctb_max_combo(map_id, scores):
+    """Get the max combo of a CTB map."""
+    for score in scores:
+        if score[11]:  # Remember to update this if I change the SQL string.
+            return score[10]
+    text = get_osu_text(map_id)
+    if not text:
+        return None
+    return None  # The number of lines in [HitObjects] isn't the right answer.
 
 
 def mania_hitobjects(text):
