@@ -242,6 +242,7 @@
 
                     scores.forEach(function(score, index){
                         var mods_array = mods(score.mods);
+                        var pp = score.pp == null ? 'NA' : score.pp.toFixed(2)
                         score.accuracy = accuracy(mode, score.n300, score.n100, score.n50, score.nmiss, score.nkatu, score.ngeki);
                         score.grade = grade(mode, mods_array, score.accuracy, score.n300, score.n100, score.n50, score.nmiss);
                         score.flag = score.flag.toLowerCase();
@@ -289,7 +290,7 @@
                             }
                             insert_html
                                 += '<tr class="row1p"><td><strong>Mods</strong></td><td>' + mods_string(mods_array) + '</td></tr>'
-                                + '<tr class="row2p"><td><strong>pp</strong></td><td>' + score.pp.toFixed(2) + '</td></tr>'
+                                + '<tr class="row2p"><td><strong>pp</strong></td><td>' + pp + '</td></tr>'
                                 + '</table>'
                                 + '</div>'
                                 + '<div class="clear"></div>'
@@ -341,7 +342,7 @@
                             + '<td><img src="//s.ppy.sh/images/'
                             + score.grade + '_small.png" /></td>'
                             + '<td><b>' + score.score.toLocaleString() + '</b></td>'
-                            + '<td>' + score.pp.toFixed(2) + '</td>'
+                            + '<td>' + pp + '</td>'
                             + '<td>' + score.accuracy.toFixed(2) + '%</td>'
                             + '<td><img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
                             + ' <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
