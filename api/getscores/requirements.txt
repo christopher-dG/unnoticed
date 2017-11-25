@@ -1,2 +1,3 @@
+pyttanko
 requests
 # https://github.com/jkehler/awslambda-psycopg2
