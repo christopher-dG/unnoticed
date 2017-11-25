@@ -278,7 +278,8 @@ def ctb_max_combo(map_id, scores):
             break
         count += 1
         if "|" in line:  # Only sliders contain this character.
-            count += 1.4  # Mean slider combo value we previously calculated.
+            # We calculated a mean of ~2.4, so add the remainder.
+            count += 1.4
     return round(count)
 
 
