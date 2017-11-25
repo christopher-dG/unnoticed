@@ -210,7 +210,7 @@
                     });
 
                     scores = scores.sort(function(a, b){ return a.score - b.score; })
-                                   .reverse();
+                                   .reverse().slice(0, 50);
 
                     $('<div style="margin:20px auto; background: rgb(208, 231, 249); border-radius: 5px; width: 50%; padding: 15px;">'
                     + '<center>This map is UNRANKED.<br />'
