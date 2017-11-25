@@ -242,7 +242,7 @@
 
                     scores.forEach(function(score, index){
                         var mods_array = mods(score.mods);
-                        var pp = score.pp == null ? 'NA' : score.pp.toFixed(2)
+                        var pp = score.pp == null ? 'NA' : score.pp.toFixed(2);
                         score.accuracy = accuracy(mode, score.n300, score.n100, score.n50, score.nmiss, score.nkatu, score.ngeki);
                         score.grade = grade(mode, mods_array, score.accuracy, score.n300, score.n100, score.n50, score.nmiss);
                         score.flag = score.flag.toLowerCase();

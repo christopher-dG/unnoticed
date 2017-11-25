@@ -257,9 +257,6 @@ def ctb_max_combo(map_id, scores):
     text = get_osu_text(map_id)
     if not text:
         return None
-    text = get_osu_text(map_id)
-    if not text:
-        return None
     for i, line in enumerate(text.split("\n")):
         if "[HitObjects]" in line:
             break
