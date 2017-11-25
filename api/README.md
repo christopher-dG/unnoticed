@@ -7,12 +7,4 @@ required `libpq` libraries available to dynamically link, so we need to use
 [this](https://github.com/jkehler/awslambda-psycopg2) version which contains
 statically linked libraries.
 
-To prepare a deployment package, `cd` to the function's directory, and run:
-
-```sh
-pip3 install -r requirements.txt -t .
-git clone https://github.com/jkehler/awslambda-psycopg2
-mv awslambda-psycopg2/psycopg2-3.6 ./psycopg2
-rm -rf awslambda-psycopg2
-zip -r pkg.zip *
-```
+To prepare a deployment package, run: `./pkg.sh <dir>`.
