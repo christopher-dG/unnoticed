@@ -90,7 +90,7 @@ def handler(event, _):
         if any(s[1] == 2 for s in scores):
             map_dicts[2]["max_combo"] = ctb_max_combo(map_id, scores)
         if any(s[1] == 3 for s in scores):
-            map_dicts[3]["hitobjects"] = mania_hitobjects(get_osu_text(map_id))
+            map_dicts[3]["hitobjects"] = hitobjects(get_osu_text(map_id))
 
         for score in scores:
             d = {}
@@ -102,7 +102,7 @@ def handler(event, _):
             d["outdated"] = map_hash != score[-1]
             d["pp"] = get_pp(
                 map_id, map_dicts[d["mode"]], d["mode"], d["score"], d["mods"],
-                d["combo"], d["n300"], d["n100"], d["n50"], d["ngeki"], 
+                d["combo"], d["n300"], d["n100"], d["n50"], d["ngeki"],
                 d["nkatu"], d["nmiss"],
             )
 
@@ -128,7 +128,7 @@ def get_hash(map_id):
 
 
 def get_pp(
-        map_id, beatmap, mode, score, mods, combo, n300, n100, n50, ngeki, 
+        map_id, beatmap, mode, score, mods, combo, n300, n100, n50, ngeki,
         nkatu, nmiss,
 ):
     """Get pp for a play."""
@@ -196,7 +196,10 @@ def ctb(map_id, beatmap, mods, combo, n300, n100, n50, nkatu, nmiss):
     return pp
 
 
-def mania(map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu, nmiss):
+def mania(
+        map_id, beatmap, score, mods, combo, n300, n100, n50, ngeki, nkatu,
+        nmiss,
+):
     """Get pp for a Mania play."""
     nobjs = beatmap["hitobjects"]
     if nobjs is None:
@@ -248,15 +251,38 @@ def get_osu_text(map_id):
 def ctb_max_combo(map_id, scores):
     """Get the max combo of a CTB map."""
     for score in scores:
-        if score[11]:  # Remember to update this if I change the SQL string.
-            return score[10]
+        if score[11]:  # 'fc': Update this if I change the SQL string.
+            # If there's an FC, we know that it has maximum combo.
+            return score[10]  # 'combo'.
     text = get_osu_text(map_id)
     if not text:
         return None
-    return None  # The number of lines in [HitObjects] isn't the right answer.
+    text = get_osu_text(map_id)
+    if not text:
+        return None
+    for i, line in enumerate(text.split("\n")):
+        if "[HitObjects]" in line:
+            break
+    else:
+        return None
+
+    # Reverse-engineering the formula for slider combo has proven difficult
+    # for anything but linear sliders, so we'll just approximate.
+    # Some quick and dirty analysis on maps from 2010-2017 can be found here:
+    # https://gist.github.com/christopher-dG/216e4a43618a9a68a03e9db48e30e66b
+    # Note that this was only performed on catch-specific maps, standard ones
+    # will probably tend towards slightly longer sliders.
+    count = 0
+    for line in text.split("\n")[i + 1:]:
+        if not line:
+            break
+        count += 1
+        if "|" in line:  # Only sliders contain this character.
+            count += 1.4  # Mean slider combo value we previously calculated.
+    return round(count)
 
 
-def mania_hitobjects(text):
+def hitobjects(text):
     """Get the number of hitobjects from the text of a .osu file."""
     if not text:
         return None
