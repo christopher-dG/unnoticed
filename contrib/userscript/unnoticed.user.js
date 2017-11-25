@@ -180,7 +180,7 @@
 
         if(forced_mode != 0) mode = forced_mode;
 
-        var showOutdated = window.location.hash == "#showOutdated" ? true : false;
+        var showOutdated = window.location.hash == "#showOutdated"
 
         GM_xmlhttpRequest({
             method: "GET",
@@ -289,6 +289,7 @@
                             }
                             insert_html
                                 += '<tr class="row1p"><td><strong>Mods</strong></td><td>' + mods_string(mods_array) + '</td></tr>'
+                                + '<tr class="row2p"><td><strong>pp</strong></td><td>' + score.pp.toFixed(2) + '</td></tr>'
                                 + '</table>'
                                 + '</div>'
                                 + '<div class="clear"></div>'
@@ -300,6 +301,7 @@
                                 + '<tr class="titlerow">'
                                 + '<th></th><th><strong>Rank</strong></th>'
                                 + '<th><strong>Score</strong></th>'
+                                + '<th><strong>pp</strong></th>'
                                 + '<th><strong>Accuracy</strong></th>'
                                 + '<th><strong>Player</strong></th>'
                                 + '<th><strong>Max Combo</th>';
@@ -323,8 +325,9 @@
                                     += '</strong></th><th><strong>Misses</strong></th>';
                             }
                             insert_html
-                                += '<th></th><th><strong>Mods</strong></th>'
-                                + '</tr>';
+                                += '<th><strong>Mods</strong></th>'
+                                + '<th><strong>Date</strong></th>'
+                                + '<th></th></tr>';
                         }
 
                         insert_html += '<tr class="';
@@ -338,6 +341,7 @@
                             + '<td><img src="//s.ppy.sh/images/'
                             + score.grade + '_small.png" /></td>'
                             + '<td><b>' + score.score.toLocaleString() + '</b></td>'
+                            + '<td>' + score.pp.toFixed(2) + '</td>'
                             + '<td>' + score.accuracy.toFixed(2) + '%</td>'
                             + '<td><img class="flag" src="//s.ppy.sh/images/flags/' + score.flag + '.gif" />'
                             + ' <a href="/u/' + score.player_id + '">' + score.player + '</a></td>'
@@ -358,6 +362,9 @@
                         insert_html
                             += '<td>' + score.nmiss + '</td>'
                             + '<td>' + mods_string(mods_array) + '</td>'
+                            + '<td><time class="timeago" datetime="' + moment.unix(score.date).format()
+                            + '">' + moment.unix(score.date).fromNow() + '</time></td>'
+                            + '<td><a href=https://github.com/christopher-dG/unnoticed/wiki/Viewing-Leaderboards#outdated-scoresreporting>Report</a></td>'
                             + '<td style="opacity: 0; pointer-events: none;"><a>Report</a></td>'
                             + '</tr>';
                     });
