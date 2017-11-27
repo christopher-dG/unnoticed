@@ -120,6 +120,8 @@ def handler(event, _):
 def get_hash(map_id):
     """Get the MD5 hash of a beatmap's most recent version."""
     beatmap = get_beatmap_api(map_id)
+    if beatmap is None:
+        return None
     md5 = beatmap.get("file_md5")
     if not md5:
         print("file_md5 key is missing")
