@@ -4,14 +4,21 @@ set -e
 
 [ -z $STAGE ] && echo '$STAGE is not set' && exit 1
 
+function install_aws() {
+    curl https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip
+    unzip awscli-bundle.zip
+    ./awscli-bundle/install -i $HOME/aws -b $HOME/bin/aws
+    rm -rf awscli-bundle awscli-bundle.zip
+    export PATH=$HOME/bin:$PATH
+    aws configure set region us-east-1
+    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    aws configure set aws_secret_accses_key $AWS_SECRET_ACCESS_KEY
+}
+
 case $STAGE in
 
     'TEST' )
-        export PATH=$HOME/Library/Python/2.7/bin:$PATH  # For MacOS.
-        pip install awscli --user
-        aws configure set region us-east-1
-        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-        aws configure set aws_secret_accses_key $AWS_SECRET_ACCESS_KEY
+        install_aws
         aws s3 sync s3://unnoticed-test ./testdata
         go test -v -cover
         ;;
