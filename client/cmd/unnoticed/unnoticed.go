@@ -39,6 +39,7 @@ func main() {
 
 	osuPath := path.Join(osuDir, "osu!.db")
 	scoresPath := path.Join(osuDir, "scores.db")
+	replaysPath := path.Join(osuDir, "Data", "r")
 
 	// Exit by keyboard interrupt.
 	c := make(chan os.Signal, 1)
@@ -63,8 +64,8 @@ func main() {
 
 		fmt.Println()
 		unnoticed.LogMsgf("monitoring %s, press Ctrl-C at any time to exit", scoresPath)
-		if err = unnoticed.Watch(scoresPath); err != nil {
-			unnoticed.LogMsg("file monitoring failed, uploading scores just in case")
+		if err = unnoticed.Watch(replaysPath); err != nil {
+			unnoticed.LogMsg("directory monitoring failed, uploading scores just in case")
 		}
 	}
 }

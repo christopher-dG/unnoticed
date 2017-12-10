@@ -1,6 +1,7 @@
 package unnoticed
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -8,33 +9,33 @@ import (
 
 // TestWatch tests that Watch returns when the file it's monitoring is modified.
 func TestWatch(t *testing.T) {
-	if !testing.Short() {
-		// This will wait for one minute, so we can skip it if necessary.
-		if err := Watch("unnoticed.tmp"); err == nil {
-			t.Error("expected err != nil, got nil")
-		}
-	}
-
-	f, err := os.Create("unnoticed.tmp")
+	count := 5
+	wd, err := os.Getwd()
 	if err != nil {
-		t.Skipf("couldn't create file: %s", err)
-	}
-	if _, err = f.Write([]byte{'a', 'b', 'c'}); err != nil {
-		t.Skipf("couldn't write to file: %s", err)
+		t.Skipf("couldn't get working directory: %s", err)
 	}
 
-	t.Log("monitoring unoticed.tmp")
 	go func() {
-		time.Sleep(time.Second)
-		if _, err = f.Write([]byte{'d', 'e', 'f'}); err != nil {
-			t.Skipf("couldn't write to file: %s", err)
+		for i := 1; i <= count; i++ {
+			time.Sleep(time.Second)
+			_, err := os.Create(fmt.Sprintf("unnoticed%d.tmp", i))
+			if err != nil {
+				t.Skipf("couldn't create file: %s", err)
+			}
 		}
 	}()
 
-	if err = Watch("unnoticed.tmp"); err != nil {
+	go func() { // The call to Watch should return immediately after the above goroutine.
+		time.Sleep(10 * time.Second)
+		t.Error("TestWatch took too long")
+	}()
+	err = Watch(wd)
+
+	if err != nil {
 		t.Errorf("expected err == nil, got '%s'", err)
-	} else {
-		t.Log("successfully returned from Watch")
 	}
-	os.Remove("unnoticed.tmp")
+
+	for i := 1; i <= count; i++ {
+		os.Remove(fmt.Sprintf("unnoticed%d.tmp", i))
+	}
 }

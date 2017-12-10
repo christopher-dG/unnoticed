@@ -1,48 +1,26 @@
 package unnoticed
 
 import (
-	"crypto/md5"
-	"io"
-	"os"
-	"time"
+	"path"
+
+	"github.com/rjeczalik/notify"
 )
 
-// Watch waits until fn is modified.
-func Watch(fn string) error {
-	initHash, err := getHash(fn)
-	if err != nil {
-		// This shouldn't happen, but if it does then wait a
-		// bit before returning to avoid spamming my API.
-		LogMsgf("couldn't get initial hash value for %s; idling for 1 minute", fn)
-		time.Sleep(time.Minute)
+// Watch waits until some new files are created in dir.
+// Don't return for every new file to avoid spamming my API for every replay.
+func Watch(dir string) error {
+	count := 5
+	events := make(chan notify.EventInfo, count)
+	path := path.Join(dir, "...")
+	if err := notify.Watch(path, events, notify.Create); err != nil {
+		LogMsgf("error watching replay directory: %s", err)
 		return err
 	}
+	defer notify.Stop(events)
 
-	for {
-		hash, err := getHash(fn)
-		if err != nil {
-			LogMsg(err)
-		} else if string(hash) != string(initHash) {
-			LogMsgf("%s was modified", fn)
-			return nil
-		}
-		time.Sleep(10 * time.Second)
+	for i := 1; i <= count; i++ {
+		event := <-events
+		LogMsgf("new replay file %d/5: %s", i, event.Path())
 	}
-}
-
-// getHash computes the MD5 hash value for the file fn.
-func getHash(fn string) ([]byte, error) {
-	f, err := os.Open(fn)
-	if err != nil {
-		LogMsgf("reading %s failed: %s", fn, err)
-		return nil, err
-	}
-	defer f.Close()
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		LogMsgf("computing the hash for %s failed: %s", fn, err)
-		return nil, err
-	} else {
-		return h.Sum(nil), nil
-	}
+	return nil
 }
