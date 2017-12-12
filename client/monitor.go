@@ -1,48 +1,50 @@
 package unnoticed
 
 import (
-	"crypto/md5"
-	"io"
-	"os"
-	"time"
+	"path"
+
+	"github.com/rjeczalik/notify"
 )
 
-// Watch waits until fn is modified.
-func Watch(fn string) error {
-	initHash, err := getHash(fn)
-	if err != nil {
-		// This shouldn't happen, but if it does then wait a
-		// bit before returning to avoid spamming my API.
-		LogMsgf("couldn't get initial hash value for %s; idling for 1 minute", fn)
-		time.Sleep(time.Minute)
-		return err
-	}
+const (
+	FileNotification = iota
+	DirNotification
+	ErrorNotification
+)
 
-	for {
-		hash, err := getHash(fn)
-		if err != nil {
-			LogMsg(err)
-		} else if string(hash) != string(initHash) {
-			LogMsgf("%s was modified", fn)
-			return nil
-		}
-		time.Sleep(10 * time.Second)
+// WatchFile waits until fn is modified, then writes to the fs channel.
+func WatchFile(fs chan int, fn string) {
+	events := make(chan notify.EventInfo, 1)
+	if err := notify.Watch(fn, events, notify.All); err != nil {
+		LogMsgf("error watching file %s: %s", fn, err)
+		fs <- ErrorNotification
+		return
 	}
+	defer notify.Stop(events)
+	ei := <-events
+	LogMsgf("%s was updated: %s", fn, ei.Event().String())
+	fs <- FileNotification
 }
 
-// getHash computes the MD5 hash value for the file fn.
-func getHash(fn string) ([]byte, error) {
-	f, err := os.Open(fn)
-	if err != nil {
-		LogMsgf("reading %s failed: %s", fn, err)
-		return nil, err
+// WatchDir waits until a new file is created in dir, then writes to the fs channel.
+// Runs until the stop channel receives a message.
+func WatchDir(fs chan int, stop chan bool, dir string) {
+	events := make(chan notify.EventInfo, 1)
+	path := path.Join(dir, "...")
+	if err := notify.Watch(path, events, notify.Create); err != nil {
+		LogMsgf("error watching directory %s: %s", dir, err)
+		fs <- ErrorNotification
+		return
 	}
-	defer f.Close()
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		LogMsgf("computing the hash for %s failed: %s", fn, err)
-		return nil, err
-	} else {
-		return h.Sum(nil), nil
+	defer notify.Stop(events)
+
+	for {
+		select {
+		case ei := <-events:
+			LogMsgf("new file: %s", ei.Path())
+			fs <- DirNotification
+		case <-stop:
+			return
+		}
 	}
 }
