@@ -6,13 +6,14 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sort"
 )
 
 // Beatmap is an osu! beatmap.
 type Beatmap struct {
-	MD5 string // Beatmap hash.
-	ID  uint32 // Map ID.
+	MD5 string `json:"md5"` // Beatmap hash.
+	ID  uint32 `json:"id"`  // Map ID.
 }
 
 // Score is a score on a particular beatmap.
@@ -38,10 +39,9 @@ type Score struct {
 
 // DB is a collection of unranked beatmaps and scores.
 type DB struct {
-	json.Marshaler
-	Username string     // Player username.
-	Scores   []*Score   // List of scores.
-	Beatmaps []*Beatmap // List of beatmaps.
+	Username string     `json:"username"` // Player username.
+	Scores   []*Score   `json:"scores"`   // List of scores.
+	Beatmaps []*Beatmap `json:"beatmaps"` // List of beatmaps.
 }
 
 // ResponseBody is the JSON object returned by the score upload request.
@@ -58,6 +58,7 @@ func (db *DB) MarshalJSON() ([]byte, error) {
 		mapMap[beatmap.MD5] = beatmap.ID
 	}
 
+	// Only include scores with a matching beatmap.
 	scores := []*Score{}
 	for _, score := range db.Scores {
 		if val, ok := mapMap[score.MHash]; ok {
@@ -69,7 +70,33 @@ func (db *DB) MarshalJSON() ([]byte, error) {
 	}
 	self["scores"] = scores
 
+	// Only include beatmaps with at least one score.
+	beatmapIDs := []int{} // This will contain duplicates but that's okay.
+	for _, score := range scores {
+		beatmapIDs = append(beatmapIDs, score.Map)
+	}
+	beatmaps := []*Beatmap{}
+	for _, beatmap := range db.Beatmaps {
+		if i := sort.SearchInts(beatmapIDs, score.Map); i < l && md5s[i] == score.MHash {
+	}
+	
 	return json.Marshal(self)
+}
+
+// DumpJSON writes the JSON representation of db to fn.
+func (db *DB) DumpJSON(fn string) error {
+	b, err := json.Marshal(db)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(fn)
+	if err != nil {
+		return err
+	}
+	if _, err = f.Write(b); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Upload posts the scores database to an API endpoint.
