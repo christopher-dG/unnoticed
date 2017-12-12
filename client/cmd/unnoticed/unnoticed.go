@@ -70,7 +70,7 @@ func main() {
 		// For new replays, only upload after a few have been made to avoid spamming.
 		nReplays := 0
 		stop := make(chan bool, 1)
-		unnoticed.LogMsg("monitoring... Press Ctrl-C at any time to exit")
+		unnoticed.LogMsg("monitoring... press ctrl-c at any time to exit")
 		go unnoticed.WatchFile(fs, scoresPath)
 		go unnoticed.WatchDir(fs, stop, replaysPath)
 
@@ -80,11 +80,9 @@ func main() {
 				unnoticed.LogMsg("monitoring failed, uploading just in case")
 				fallthrough
 			case unnoticed.FileNotification: // scores.db updated.
-				unnoticed.LogMsg("scores.db was updated")
 				nReplays = limit // I guess break doesn't work here.
 			case unnoticed.DirNotification: // New replay.
 				nReplays++
-				unnoticed.LogMsgf("found new replay %d/%d", nReplays, limit)
 			}
 		}
 		stop <- true

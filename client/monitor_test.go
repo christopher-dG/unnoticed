@@ -24,7 +24,7 @@ func TestWatchDir(t *testing.T) {
 	select {
 	case notif := <-fs:
 		if notif != DirNotification {
-			t.Errorf("expected notif == DirNotification (2), got %d", notif)
+			t.Errorf("expected notif == DirNotification (1), got %d", notif)
 		}
 	case <-time.After(time.Second):
 		t.Error("TestWatchDir took too long")
@@ -48,7 +48,7 @@ func TestWatchFile(t *testing.T) {
 	select {
 	case notif := <-fs:
 		if notif != FileNotification {
-			t.Errorf("expected notif == FileNotification (1), got %d", notif)
+			t.Errorf("expected notif == FileNotification (0), got %d", notif)
 		}
 	case <-time.After(time.Second):
 		t.Error("TestWatchFile took too long")
