@@ -1,6 +1,7 @@
 package unnoticed
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -57,6 +58,37 @@ func OsuDir() (string, error) {
 	}
 
 	return "", errors.New(".db files were not found")
+}
+
+// DumpScores writes all scores' hashes to fn as a JSON list.
+func DumpScores(fn string, scores []*Score) error {
+	hashes := []string{}
+	for _, score := range scores {
+		found := false
+		for _, hash := range hashes {
+			if score.SHash == hash {
+				found = true
+				break
+			}
+		}
+		if !found {
+			hashes = append(hashes, score.SHash)
+		}
+	}
+
+	b, err := json.Marshal(hashes)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(fn)
+	if err != nil {
+		return err
+	}
+	if _, err = f.Write(b); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // LogSetup tries sto set up file logging with with fn.

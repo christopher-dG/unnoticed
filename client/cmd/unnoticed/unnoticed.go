@@ -7,14 +7,24 @@ import (
 	"os/signal"
 	"path"
 
+	"github.com/ProtonMail/go-appdir"
 	"github.com/christopher-dG/unnoticed"
 )
 
 func main() {
-	logFile := path.Join(os.TempDir(), "unnoticed.log")
-	if f, err := unnoticed.LogSetup(logFile); err == nil {
-		defer f.Close()
-		unnoticed.LogMsgf("log file: %s", logFile)
+	dirs := appdir.New("unnoticed")
+	logDir := dirs.UserLogs()
+	cacheDir := dirs.UserCache()
+	unnoticed.LogMsgf("log directory: %s", logDir)
+	unnoticed.LogMsgf("cache directory: %s", cacheDir)
+	logFile := path.Join(logDir, "unnoticed.log")
+	scoreCache := path.Join(cacheDir, "scores.json")
+
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		unnoticed.LogMsgf("couldn't create cache directory %s: %s", cacheDir, err)
+	}
+	if _, err := unnoticed.LogSetup(logFile); err != nil {
+		unnoticed.LogMsgf("log file could not be opened: %s", err)
 	}
 
 	osuDir, err := unnoticed.OsuDir()
@@ -59,10 +69,16 @@ func main() {
 			continue
 		}
 
-		if _, err := db.Upload(); err != nil {
+		scores := db.Scores[:] // Store this before db gets mutated.
+		if _, err := db.Upload(scoreCache); err != nil {
 			unnoticed.LogMsgf("uploading scores failed: %s", err)
+			unnoticed.LogMsg("clearing score cache")
+			os.RemoveAll(scoreCache)
 		} else {
 			unnoticed.LogMsg("uploading scores succeeded")
+			if err = unnoticed.DumpScores(scoreCache, scores); err != nil {
+				unnoticed.LogMsgf("dumping scores failed: %s", err)
+			}
 		}
 		fmt.Println()
 

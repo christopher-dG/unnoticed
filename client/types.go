@@ -70,37 +70,54 @@ func (db *DB) MarshalJSON() ([]byte, error) {
 	}
 	self["scores"] = scores
 
-	// Only include beatmaps with at least one score.
-	beatmapIDs := []int{} // This will contain duplicates but that's okay.
-	for _, score := range scores {
-		beatmapIDs = append(beatmapIDs, score.Map)
-	}
-	beatmaps := []*Beatmap{}
-	for _, beatmap := range db.Beatmaps {
-		if i := sort.SearchInts(beatmapIDs, score.Map); i < l && md5s[i] == score.MHash {
-	}
-	
 	return json.Marshal(self)
 }
 
-// DumpJSON writes the JSON representation of db to fn.
-func (db *DB) DumpJSON(fn string) error {
-	b, err := json.Marshal(db)
+// FilterNew removes all scores contained in fn.
+func (db *DB) FilterNew(fn string) error {
+	if _, err := os.Stat(fn); err != nil {
+		// If the file isn't found, we don't consider it an error, we just don't filter.
+		LogMsgf("file %s was not found", fn)
+		return nil
+	}
+
+	b, err := ioutil.ReadFile(fn)
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(fn)
-	if err != nil {
+
+	hashes := []string{} // Hashes of existing scores.
+	if err := json.Unmarshal(b, &hashes); err != nil {
 		return err
 	}
-	if _, err = f.Write(b); err != nil {
-		return err
+
+	filtered := []*Score{}
+	for _, score := range db.Scores {
+		found := false
+		for _, hash := range hashes {
+			if hash == score.SHash {
+				found = true
+				break
+			}
+		}
+		if !found {
+			filtered = append(filtered, score)
+		}
 	}
+
+	nScores := len(db.Scores)
+	LogMsgf("dropped %d old scores out of %d", nScores-len(filtered), nScores)
+	db.Scores = filtered
+
 	return nil
 }
 
 // Upload posts the scores database to an API endpoint.
-func (db *DB) Upload() (*http.Response, error) {
+func (db *DB) Upload(cache string) (*http.Response, error) {
+	if err := db.FilterNew(cache); err != nil {
+		LogMsg("filtering old scores failed; uploading all scores")
+	}
+
 	out, err := json.Marshal(db)
 	if err != nil {
 		return nil, err
