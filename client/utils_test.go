@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-// TestOsuDir tests that the OsuDir() function properly finds the osu! database files.
 func TestOsuDir(t *testing.T) {
 	if _, err := OsuDir(); err == nil {
 		t.Error("expected OsuDir() != nil, got nil")
@@ -67,7 +66,6 @@ func TestOsuDir(t *testing.T) {
 	os.RemoveAll("osu!")
 }
 
-// testDirs tests OsuDir for each dir in dirs.
 func testDirs(t *testing.T, dirs []string) {
 	t.Logf("testing directories: %s", dirs)
 	for _, dir := range dirs {
