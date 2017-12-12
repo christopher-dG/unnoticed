@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// TestDB tests database generation and JSON marshalling.
-// This covers everything in parsing and a bunch of stuff in types.
 func TestDB(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		t.SkipNow()
@@ -44,7 +42,6 @@ func TestDB(t *testing.T) {
 	}
 }
 
-// TestDarwin tests MacOS's slightly modified parsing algorithm. See #9.
 func TestDarwin(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.SkipNow()
