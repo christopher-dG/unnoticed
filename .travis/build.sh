@@ -41,10 +41,10 @@ case $STAGE in
         go build -v -o $DIR/$GOOS-$GOARCH-unnoticed.exe ./cmd/unnoticed
         echo -e '\n========================= MacOS 64-bit =========================\n'
         export GOOS=darwin GOARCH=amd64
-        go build -v -o $DIR/$GOOS-$GOARCH-unnoticed ./cmd/unnoticed
+        go build -tags kqueue -v -o $DIR/$GOOS-$GOARCH-unnoticed ./cmd/unnoticed
         echo -e '\n========================= MacOS 32-bit =========================\n'
         export GOOS=darwin GOARCH=386
-        go build -v -o $DIR/$GOOS-$GOARCH-unnoticed ./cmd/unnoticed
+        go build -tags kqueue -v -o $DIR/$GOOS-$GOARCH-unnoticed ./cmd/unnoticed
 
         echo $DIR > .bin-dir
         ;;
