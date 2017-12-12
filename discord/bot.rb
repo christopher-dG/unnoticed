@@ -17,7 +17,7 @@ MODS = [  # Reference: https://github.com/ppy/osu-api/wiki#mods
   ['RX', 1 << 7], ['AP', 1 << 13], ['SO', 1 << 12], ['AT', 1 << 11], ['V2', 1 << 29],
   ['1K', 1 << 26], ['2K', 1 << 28], ['3K', 1 << 27], ['4K', 1 << 15], ['5K', 1 << 16],
   ['6K', 1 << 17], ['7K', 1 << 18], ['8K', 1 << 19], ['9K', 1 << 24], ['TK', 1 << 25],
-  ['FI', 1 << 20], ['RN', 1 << 21],
+  ['FI', 1 << 20], ['RN', 1 << 21], ['TD', 1 << 2],
 ]
 
 # Reply to a message containing a beatmap link with a leaderboard table.
