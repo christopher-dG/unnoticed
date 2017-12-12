@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
-// @version      1.1.0
+// @version      1.1.1
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       Node
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
@@ -21,6 +21,7 @@
         ''    : 0,
         'NF'  : 1,
         'EZ'  : 2,
+        'TD'  : 4,
         'HD'  : 8,
         'HR'  : 16,
         'SD'  : 32,
