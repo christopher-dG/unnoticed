@@ -49,6 +49,9 @@ func main() {
 		done(logFile, 0)
 	}()
 
+	limit := 10
+	fs := make(chan int, limit) // Filesystem notifications.
+
 	for {
 		db, err := unnoticed.BuildDB(scoresPath, osuPath)
 		if err != nil {
@@ -61,12 +64,30 @@ func main() {
 		} else {
 			unnoticed.LogMsg("uploading scores succeeded")
 		}
-
 		fmt.Println()
-		unnoticed.LogMsgf("monitoring %s, press Ctrl-C at any time to exit", scoresPath)
-		if err = unnoticed.Watch(replaysPath); err != nil {
-			unnoticed.LogMsg("directory monitoring failed, uploading scores just in case")
+
+		// Wait for new replays or scores.db update, then upload again.
+		// For new replays, only upload after a few have been made to avoid spamming.
+		nReplays := 0
+		stop := make(chan bool, 1)
+		unnoticed.LogMsg("monitoring... Press Ctrl-C at any time to exit")
+		go unnoticed.WatchFile(fs, scoresPath)
+		go unnoticed.WatchDir(fs, stop, replaysPath)
+
+		for nReplays < limit {
+			switch <-fs {
+			case unnoticed.ErrorNotification:
+				unnoticed.LogMsg("monitoring failed, uploading just in case")
+				fallthrough
+			case unnoticed.FileNotification: // scores.db updated.
+				unnoticed.LogMsg("scores.db was updated")
+				nReplays = limit // I guess break doesn't work here.
+			case unnoticed.DirNotification: // New replay.
+				nReplays++
+				unnoticed.LogMsgf("found new replay %d/%d", nReplays, limit)
+			}
 		}
+		stop <- true
 	}
 }
 

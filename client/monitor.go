@@ -6,21 +6,45 @@ import (
 	"github.com/rjeczalik/notify"
 )
 
-// Watch waits until some new files are created in dir.
-// Don't return for every new file to avoid spamming my API for every replay.
-func Watch(dir string) error {
-	count := 5
-	events := make(chan notify.EventInfo, count)
+const (
+	FileNotification = iota
+	DirNotification
+	ErrorNotification
+)
+
+// WatchFile waits until fn is modified, then writes to the fs channel.
+func WatchFile(fs chan int, fn string) {
+	events := make(chan notify.EventInfo, 1)
+	if err := notify.Watch(fn, events, notify.All); err != nil {
+		LogMsgf("error watching file %s: %s", fn, err)
+		fs <- ErrorNotification
+		return
+	}
+	defer notify.Stop(events)
+	ei := <-events
+	LogMsgf("%s was updated: %s", fn, ei.Event().String())
+	fs <- FileNotification
+}
+
+// WatchDir waits until a new file is created in dir, then writes to the fs channel.
+// Runs until the stop channel receives a message.
+func WatchDir(fs chan int, stop chan bool, dir string) {
+	events := make(chan notify.EventInfo, 1)
 	path := path.Join(dir, "...")
 	if err := notify.Watch(path, events, notify.Create); err != nil {
-		LogMsgf("error watching replay directory: %s", err)
-		return err
+		LogMsgf("error watching directory %s: %s", dir, err)
+		fs <- ErrorNotification
+		return
 	}
 	defer notify.Stop(events)
 
-	for i := 1; i <= count; i++ {
-		event := <-events
-		LogMsgf("new replay file %d/5: %s", i, event.Path())
+	for {
+		select {
+		case ei := <-events:
+			LogMsgf("new file: %s", ei.Path())
+			fs <- DirNotification
+		case <-stop:
+			return
+		}
 	}
-	return nil
 }
