@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
-// @version      1.1.1
+// @version      1.1.2
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       Node
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
@@ -47,6 +47,7 @@
         '1K'  : 67108864,
         '3K'  : 134217728,
         '2K'  : 268435456,
+        'V2'  : 536870912,
     };
 
     function accuracy(mode, c300, c100, c50, cmiss, ckatu, cgeki){
