@@ -1,7 +1,9 @@
 import json
 import os
+
 import psycopg2
 import psycopg2.extras
+
 import requests
 
 
@@ -31,12 +33,7 @@ def handler(event, _):
         return response
 
     try:
-        conn = psycopg2.connect(
-            database=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            host=os.environ["DB_HOST"],
-        )
+        conn = psycopg2.connect("")
     except Exception as e:
         print("Couldn't connect to DB: %s" % e)
         body["error"] = "couldn't connect to database"
