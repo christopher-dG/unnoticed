@@ -2,7 +2,9 @@ import io
 import json
 import math
 import os
+
 import psycopg2
+
 import pyttanko
 import requests
 
@@ -53,12 +55,7 @@ def handler(event, _):
     print("Processing %s" % map_ids)
 
     try:
-        conn = psycopg2.connect(
-            database=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            host=os.environ["DB_HOST"],
-        )
+        conn = psycopg2.connect("")
     except Exception as e:
         print("Couldn't connect to DB: %s" % e)
         body["info"] = str(e)
