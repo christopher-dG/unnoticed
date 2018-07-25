@@ -3,7 +3,7 @@
 // @namespace    https://github.com/christopher-dG/unnoticed
 // @version      1.2
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
-// @author       Node
+// @author       LazyLea
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
 // @match        https://osu.ppy.sh/*/*
 // @include      https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/*
