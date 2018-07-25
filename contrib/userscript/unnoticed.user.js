@@ -649,8 +649,8 @@ function new_leaderboard(){
             insert_html +=
               '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">Max</th>'
             + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">300</th>'
-            + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">200</th>';
-            + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">100</th>';
+            + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">200</th>'
+            + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">100</th>'
             + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--hitstat">50</th>';
           }
           insert_html +=
