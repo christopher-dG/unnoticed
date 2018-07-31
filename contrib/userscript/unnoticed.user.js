@@ -731,7 +731,7 @@ function new_leaderboard(){
   });
 }
 
-function pageChange(){
+function page_change(){
   if(xhr) xhr.abort();
   console.log("[Unnoticed] page change", window.location.pathname);
   if(window.location.pathname.startsWith("/s/") || window.location.pathname.startsWith("/b/")
@@ -746,20 +746,20 @@ function pageChange(){
 var pushState = history.pushState;
 history.pushState = function(){
     pushState.apply(history, arguments);
-    pageChange();
+    page_change();
 };
 
 var replaceState = history.replaceState;
 history.replaceState = function(){
     replaceState.apply(history, arguments);
-    pageChange();
+    page_change();
 };
 
-window.addEventListener("popstate", pageChange, false);
-window.addEventListener("hashchange", pageChange, false);
+window.addEventListener("popstate", page_change, false);
+window.addEventListener("hashchange", page_change, false);
 
 (function(){
-  pageChange();
+  page_change();
   if(typeof currentUser !== 'undefined'){
     currentUser.friends.forEach(function(friend){
       friends_array.push(friend.target_id);
