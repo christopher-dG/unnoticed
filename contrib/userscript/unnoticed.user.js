@@ -600,7 +600,9 @@ function zero_class(number){
 
 function new_leaderboard(){
   $(document).arrive(".beatmapset-header__status, .beatmapset-scoreboard__main", {existing: true}, function(){
-    if($(".beatmapset-header__status").text() == "graveyard" || $(".beatmapset-header__status").text() == "wip"){
+    if($(".beatmapset-header__status").text() == "graveyard"
+    || $(".beatmapset-header__status").text() == "wip"
+    || $(".beatmapset-header__status").text() == "pending"){
       $(".beatmapset-scoreboard__main").html('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores">Loading scores...</p>');
       var id_mode = window.location.hash.split("/");
       var mode = mode_number(id_mode[0].substr(1))
