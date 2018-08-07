@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
-// @version      1.2
+// @version      1.2.1
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       LazyLea
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
@@ -600,7 +600,9 @@ function zero_class(number){
 
 function new_leaderboard(){
   $(document).arrive(".beatmapset-header__status, .beatmapset-scoreboard__main", {existing: true}, function(){
-    if($(".beatmapset-header__status").text() == "graveyard" || $(".beatmapset-header__status").text() == "wip"){
+    if($(".beatmapset-header__status").text() == "graveyard"
+    || $(".beatmapset-header__status").text() == "wip"
+    || $(".beatmapset-header__status").text() == "pending"){
       $(".beatmapset-scoreboard__main").html('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores">Loading scores...</p>');
       var id_mode = window.location.hash.split("/");
       var mode = mode_number(id_mode[0].substr(1))
@@ -731,7 +733,7 @@ function new_leaderboard(){
   });
 }
 
-function pageChange(){
+function page_change(){
   if(xhr) xhr.abort();
   console.log("[Unnoticed] page change", window.location.pathname);
   if(window.location.pathname.startsWith("/s/") || window.location.pathname.startsWith("/b/")
@@ -746,20 +748,20 @@ function pageChange(){
 var pushState = history.pushState;
 history.pushState = function(){
     pushState.apply(history, arguments);
-    pageChange();
+    page_change();
 };
 
 var replaceState = history.replaceState;
 history.replaceState = function(){
     replaceState.apply(history, arguments);
-    pageChange();
+    page_change();
 };
 
-window.addEventListener("popstate", pageChange, false);
-window.addEventListener("hashchange", pageChange, false);
+window.addEventListener("popstate", page_change, false);
+window.addEventListener("hashchange", page_change, false);
 
 (function(){
-  pageChange();
+  page_change();
   if(typeof currentUser !== 'undefined'){
     currentUser.friends.forEach(function(friend){
       friends_array.push(friend.target_id);
