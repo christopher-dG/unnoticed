@@ -4,7 +4,7 @@
 // @version      1.2.1
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       LazyLea
-// @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
+// @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/userscript/unnoticed.user.js
 // @match        https://osu.ppy.sh/*/*
 // @include      https://p9bztcmks6.execute-api.us-east-1.amazonaws.com/*
 // @grant        GM_xmlhttpRequest
