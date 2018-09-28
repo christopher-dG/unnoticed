@@ -1,6 +1,12 @@
 package main
 
-import "runtime"
+import (
+	"os/user"
+	"path/filepath"
+	"runtime"
+
+	"github.com/pkg/errors"
+)
 
 // Config is the runtime configuration.
 type Config struct {
@@ -16,12 +22,15 @@ func DefaultConfig() Config {
 
 // defaultOsuRoot returns the default osu! installation directory.
 func defaultOsuRoot() string {
-	// TODO
 	switch runtime.GOOS {
 	case "windows":
-		return "."
+		u, err := user.Current()
+		if err != nil {
+			userFatal(errors.WithStack(err))
+		}
+		return filepath.Join(u.HomeDir, "AppData", "Local", "osu!")
 	case "darwin":
-		return "."
+		return "/Applications/osu!.app/Contents/Resources/drive_c/Program Files/osu!"
 	default:
 		return "."
 	}

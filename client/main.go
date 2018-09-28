@@ -45,14 +45,13 @@ func main() {
 
 // userLog records an error and prompts the user to report it.
 func userLog(err error) {
-	log.Println("[Unnoticed] encounted an error.")
-	fmt.Println("Please report the following on Discord: https://discord.gg/fwC36sS")
-	fmt.Printf("\n%+v\n", err)
+	log.Println("[Unnoticed] encounted an error")
+	fmt.Println("please report the following on Discord: https://discord.gg/fwC36sS")
+	fmt.Printf("%+v\n", err)
 }
 
 // userFatal records a fatal error and exits.
 func userFatal(err error) {
-	fmt.Println()
 	log.Println("===== UNRECOVERABLE ERROR =====")
 	userLog(err)
 	os.Exit(1)
