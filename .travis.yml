@@ -1,27 +1,18 @@
-language: go
-go: 1.9
-os:
-  - linux
-  - osx
-services: docker
-notifications:
-  email: false
-addons:
-  apt:
-    packages: python3-pip
-env:
-  - STAGE=TEST
-  - STAGE=CLIENT
-  - STAGE=API
-  - STAGE=DISCORD
+notifications: {email: false}
 matrix:
-  exclude:
-    - os: osx
-      env: STAGE=CLIENT
-    - os: osx
-      env: STAGE=API
-    - os: osx
-      env: STAGE=DISCORD
-before_install: mv client/* ./ && rmdir client
-script: ./.travis/build.sh
-after_success: ./.travis/deploy.sh
+  include:
+    - name: "Client"
+      language: go
+      go: 1.11
+      before_script:
+        - cd client
+        - curl https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip
+        - unzip awscli-bundle.zip
+        - ./awscli-bundle/install -i "$HOME/aws" -b "$HOME/bin/aws"
+        - rm -rf awscli-bundle awscli-bundle.zip
+        - export PATH=$HOME/bin:$PATH
+        - aws s3 sync s3://unnoticed-test ./data
+    - name: "API"
+      language: go
+      go: 1.11
+      before_script: cd api
