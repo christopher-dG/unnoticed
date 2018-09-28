@@ -13,17 +13,18 @@ type DB struct {
 
 // NewDB creates a new DB by reading both database files.
 func NewDB(osuRoot string) (*DB, error) {
-	osu, err := NewOsuDB(filepath.Join(osuRoot, "osu!.db"))
-	if err != nil {
+	db := &DB{Dir: osuRoot}
+	var err error
+
+	if db.Osu, err = NewOsuDB(filepath.Join(osuRoot, "osu!.db")); err != nil {
 		return nil, err
 	}
 
-	scores, err := NewScoresDB(filepath.Join(osuRoot, "scores.db"))
-	if err != nil {
+	if db.Scores, err = NewScoresDB(filepath.Join(osuRoot, "scores.db")); err != nil {
 		return nil, err
 	}
 
-	return &DB{Dir: osuRoot, Osu: osu, Scores: scores}, nil
+	return db, nil
 }
 
 // Wait blocks until the scores.db is updated.
