@@ -10,11 +10,7 @@ def get_score_hashes(event, context):
     Returns a list of replay hashes for each score by the user already stored.
     """
     body = []
-    return {
-        "headers": application_json,
-        "statusCode": 500,
-        "body": json.dumps(body),
-    }
+    return {"headers": application_json, "statusCode": 500, "body": json.dumps(body)}
 
 
 def put_scores(event, context):
@@ -22,11 +18,7 @@ def put_scores(event, context):
     Handler for /client/put_scores.
     Inserts scores sent by the user.
     """
-    return {
-        "headers": text_plain,
-        "statusCode": 500,
-        "body": "TODO",
-    }
+    return {"headers": text_plain, "statusCode": 500, "body": "TODO"}
 
 
 def get_scores(event, context):
@@ -36,11 +28,7 @@ def get_scores(event, context):
     https://github.com/ppy/osu-api/wiki#apiget_scores
     """
     body = []
-    return {
-        "headers": application_json,
-        "statusCode": 200,
-        "body": json.dumps(body),
-    }
+    return {"headers": application_json, "statusCode": 200, "body": json.dumps(body)}
 
 
 def get_user_best(event, context):
@@ -50,11 +38,7 @@ def get_user_best(event, context):
     https://github.com/ppy/osu-api/wiki#apiget_user_best
     """
     body = []
-    return {
-        "headers": application_json,
-        "statusCode": 200,
-        "body": json.dumps(body),
-    }
+    return {"headers": application_json, "statusCode": 200, "body": json.dumps(body)}
 
 
 def get_user_recent(event, context):
@@ -64,18 +48,11 @@ def get_user_recent(event, context):
     https://github.com/ppy/osu-api/wiki#apiget_user_recent
     """
     body = []
-    return {
-        "headers": application_json,
-        "statusCode": 200,
-        "body": json.dumps(body),
-    }
+    return {"headers": application_json, "statusCode": 200, "body": json.dumps(body)}
 
 
-def beatmap_maintenance(event, context):
+def mapset_maintenance(event, context):
     """
-    Cleans up the beatmap error queue.
+    Cleans up the mapset error queue.
     """
-    return {
-        "message": "TODO",
-        "event": event,
-    }
+    return {"message": "TODO", "event": event}

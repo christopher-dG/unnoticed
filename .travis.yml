@@ -1,7 +1,7 @@
 notifications: {email: false}
 matrix:
   include:
-    - name: "Client"
+    - name: Client
       language: go
       go: 1.11
       before_script:
@@ -12,7 +12,16 @@ matrix:
         - rm -rf awscli-bundle awscli-bundle.zip
         - export PATH=$HOME/bin:$PATH
         - aws s3 sync s3://unnoticed-test ./data
-    - name: "API"
-      language: go
-      go: 1.11
-      before_script: cd api
+      script: go test -v -cover
+      after_script: diff -u <(echo -n) <(gofmt -d .)
+    - name: API
+      language: python
+      python: 3.6
+      services: postgresql
+      before_script:
+        - cd api
+        - psql -c 'CREATE DATABASE postgres' -U postgres
+        - pip install pipenv
+        - pipenv install --dev
+      script: pipenv run pytest
+      after_script: pipenv run black api --check

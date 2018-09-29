@@ -12,36 +12,39 @@ environment:
 
 functions:
   get_score_hashes:
-    handler: handlers.get_score_hashes
+    handler: api.handlers.get_score_hashes
     events:
       - http:
           method: get
           path: client/get_score_hashes
   put_scores:
-    handler: handlers.put_scores
+    handler: api.handlers.put_scores
     events:
       - http:
           method: post
           path: client/put_scores
   get_scores:
-    handler: handlers.get_scores
+    handler: api.handlers.get_scores
     events:
       - http:
           method: get
           path: api/get_scores
   get_user_best:
-    handler: handlers.get_user_best
+    handler: api.handlers.get_user_best
     events:
       - http:
           method: get
           path: api/get_user_best
   get_user_recent:
-    handler: handlers.get_user_recent
+    handler: api.handlers.get_user_recent
     events:
       - http:
           method: get
           path: api/get_user_recent
-  beatmap_maintenance:
-    handler: handler.beatmap_maintenance
+  mapset_maintenance:
+    handler: api.handler.mapset_maintenance
     events:
       - schedule: rate(8 hours)
+
+plugins:
+  - serverless-python-requirements
