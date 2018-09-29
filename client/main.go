@@ -9,7 +9,11 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+const version = "TODO"
+
 func main() {
+	log.Println("[Unnoticed] version:", version)
+
 	var config Config
 	if len(os.Args) < 2 {
 		config = DefaultConfig()
@@ -48,6 +52,7 @@ func userLog(err error) {
 	log.Println("[Unnoticed] encounted an error")
 	fmt.Println("please report the following on Discord: https://discord.gg/fwC36sS")
 	fmt.Printf("%+v\n", err)
+	fmt.Println("[Unnoticed] version:", version)
 }
 
 // userFatal records a fatal error and exits.

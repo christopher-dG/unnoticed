@@ -1,9 +1,11 @@
 package main
 
 import (
-	"errors"
 	"io"
+	"log"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 const modern = 20140609
@@ -23,44 +25,49 @@ type OsuDB struct {
 func NewOsuDB(path string) (*OsuDB, error) {
 	r, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer r.Close()
 
 	if v, err := readInt(r); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else if v < modern {
 		return nil, ErrDBOutdated
 	}
 
 	// Skipping: Number of folders.
 	if _, err := r.Seek(SizeInt, io.SeekCurrent); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	if unlocked, err := readBool(r); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else if !unlocked {
 		return nil, ErrRestricted
 	}
 
 	// Skipping: Account unlock date.
 	if _, err = r.Seek(SizeLong, io.SeekCurrent); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	db := &OsuDB{}
 	if db.PlayerName, err = readString(r); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	n, err := readInt(r)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	for i := uint32(0); i < n; i++ {
 		b, err := parseOsuDBBeatmap(r)
 		if err != nil {
-			return nil, err
+			log.Println("recovered from beatmap parsing error:", err)
+			continue
+		}
+		if b.BeatmapID == 0 {
+			log.Println("skipping unsubmitted beatmap", b.MD5)
+			continue
 		}
 		db.Beatmaps = append(db.Beatmaps, b)
 	}
