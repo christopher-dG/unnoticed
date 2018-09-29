@@ -20,7 +20,6 @@ matrix:
       services: postgresql
       before_script:
         - cd api
-        - psql -c 'CREATE DATABASE postgres' -U postgres
         - pip install pipenv
         - pipenv install --dev
       script: pipenv run pytest

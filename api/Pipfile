@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 sqlalchemy = {version = "*", extras = ["postgresql"]}
+osuapi = "*"
+requests = "*"
 
 [dev-packages]
 black = "*"

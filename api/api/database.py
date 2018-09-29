@@ -20,7 +20,7 @@ Base = declarative_base()
 class Player(Base):
     __tablename__ = "players"
     user_id = Column(Integer, primary_key=True)
-    username = Column(Text, nullable=False, unique=True)
+    username = Column(Text, nullable=False, unique=True, index=True)
 
 
 class Beatmap(Base):
@@ -65,9 +65,11 @@ class Score(Base):
 
     id = Column(Integer, primary_key=True)  # Serial.
 
-    beatmap_id = Column(Integer, ForeignKey("beatmaps.beatmap_id"), nullable=False)
-    username = Column(Text, ForeignKey("players.username"), nullable=False)
-    user_id = Column(Integer, ForeignKey("players.user_id"), nullable=False)
+    beatmap_id = Column(
+        Integer, ForeignKey("beatmaps.beatmap_id"), nullable=False, index=True
+    )
+    username = Column(Text, ForeignKey("players.username"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("players.user_id"), nullable=False, index=True)
 
     mode = Column(Integer, nullable=False)
     beatmap_md5 = Column(String(32), nullable=False)
@@ -83,8 +85,32 @@ class Score(Base):
     perfect = Column(Boolean, nullable=False)
     enabled_mods = Column(Integer, nullable=False)
     date = Column(DateTime, nullable=False)
+    accuracy = Column(Float, nullable=False)
     rank = Column(String(3), nullable=False)
     pp = Column(Float, nullable=True)
+
+    def dict(self):
+        return {
+            "beatmap_id": self.beatmap_id,
+            "username": self.username,
+            "user_id": self.user_id,
+            "mode": self.mode,
+            "beatmap_md5": self.beatmap_md5,
+            "count300": self.count300,
+            "count100": self.count100,
+            "count50": self.count50,
+            "countgeki": self.countgeki,
+            "countkatu": self.countkatu,
+            "countmiss": self.countmiss,
+            "score": self.score,
+            "maxcombo": self.maxcombo,
+            "perfect": self.perfect,
+            "enabled_mods": self.enabled_mods,
+            "date": self.date,
+            "rank": self.rank,
+            "accuracy": self.accuracy,
+            "pp": self.pp,
+        }
 
 
 class IncompleteMapset(Base):

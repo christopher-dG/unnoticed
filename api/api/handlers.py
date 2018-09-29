@@ -1,7 +1,25 @@
+import datetime
 import json
+
+from .database import DBSession
 
 application_json = {"Content-Type": "application/json"}
 text_plain = {"Content-Type": "text/plain"}
+datefmt = "%Y-%m-%d %H:%M:%S"
+
+
+def _stringify(d):
+    """Stringifies all values in a dict."""
+    d = d.copy()
+    for k, v in d.items():
+        print(k)
+        if isinstance(v, float) or isinstance(v, int):
+            d[k] = str(v)
+        elif isinstance(v, bool):
+            d[k] = str(int(v))
+        elif isinstance(v, datetime.datetime):
+            d[k] = v.strftime(datefmt)
+    return d
 
 
 def get_score_hashes(event, context):

@@ -14,11 +14,8 @@ install:
   - aws configure set region us-east-1
   - aws configure set aws_access_key_id %AWS_ACCESS_KEY_ID%
   - aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
-  - aws s3 sync s3://unnoticed-test ./testdata
-before_build:
-  - ps: mv client/* ./
-  - ps: rmdir client
+  - aws s3 sync s3://unnoticed-test ./data
 build_script:
-  - go get ./...
-  - go build
+  - ps: cd client
+  - go get -v ./...
 test_script: go test -v -cover
