@@ -8,9 +8,7 @@ import (
 
 func TestNewOsuDB(t *testing.T) {
 	path := filepath.Join("data", "osu!.db")
-
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-
 		t.Skip("no test files")
 	}
 

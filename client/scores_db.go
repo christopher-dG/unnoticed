@@ -90,7 +90,6 @@ type Score struct {
 	Perfect    bool
 	Mods       uint32
 	Timestamp  uint64
-	ScoreID    uint64
 }
 
 // parseScore parses a single score from the reader.
@@ -156,12 +155,8 @@ func parseScore(r io.ReadSeeker) (Score, error) {
 		return Score{}, err
 	}
 
-	// Skipping: -1.
-	if _, err = r.Seek(SizeInt, io.SeekCurrent); err != nil {
-		return Score{}, err
-	}
-
-	if s.ScoreID, err = readLong(r); err != nil {
+	// Skipping: -1 and score ID.
+	if _, err = r.Seek(SizeInt+SizeLong, io.SeekCurrent); err != nil {
 		return Score{}, err
 	}
 
