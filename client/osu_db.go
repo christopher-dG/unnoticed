@@ -59,6 +59,7 @@ func NewOsuDB(path string) (*OsuDB, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	skipped := 0
 	for i := uint32(0); i < n; i++ {
 		b, err := parseOsuDBBeatmap(r)
 		if err != nil {
@@ -66,12 +67,13 @@ func NewOsuDB(path string) (*OsuDB, error) {
 			continue
 		}
 		if b.BeatmapID == 0 {
-			log.Println("skipping unsubmitted beatmap", b.MD5)
+			skipped++
 			continue
 		}
 		db.Beatmaps = append(db.Beatmaps, b)
 	}
 
+	log.Printf("skipped %d unsubmitted beatmaps", skipped)
 	return db, nil
 }
 

@@ -57,5 +57,6 @@ func (db DB) Payload(exclude []string) map[string]interface{} {
 	return map[string]interface{}{
 		"beatmaps": beatmaps,
 		"scores":   scores,
+		"version":  version,
 	}
 }

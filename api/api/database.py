@@ -30,7 +30,7 @@ class Beatmap(Base):
     beatmapset_id = Column(Integer, nullable=False)
 
     # These must be constantly updated.
-    file_md5 = Column(String(32), nullable=False)
+    file_md5 = Column(String(32), nullable=False, unique=True)
     approved = Column(Integer, nullable=False)
     approved_date = Column(DateTime, nullable=False)
     last_update = Column(DateTime, nullable=False)
@@ -111,6 +111,12 @@ class Score(Base):
             "accuracy": self.accuracy,
             "pp": self.pp,
         }
+
+
+class BeatmapHash(Base):
+    __table__name = "beatmap_hashes"
+    beatmap_id = Column(Integer, ForeignKey("beatmaps.beatmap_id"), primary_key=True)
+    file_md5 = Column(Integer, ForeignKey("beatmaps.file_md5"), primary_key=True)
 
 
 class IncompleteMapset(Base):
