@@ -34,6 +34,13 @@ func (db DB) Wait() error {
 
 // Payload returns the request body for uploading scores.
 func (db DB) Payload(exclude []string) map[string]interface{} {
+	var beatmaps []OsuDBBeatmap
+	for _, b := range db.Osu.Beatmaps {
+		if b.Unranked() {
+			beatmaps = append(beatmaps, b)
+		}
+	}
+
 	var scores []ScoresDBScore
 	scoreMap := make(map[string]bool)
 	for _, s := range exclude {
@@ -48,7 +55,7 @@ func (db DB) Payload(exclude []string) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"beatmaps": db.Osu.Beatmaps,
+		"beatmaps": beatmaps,
 		"scores":   scores,
 	}
 }

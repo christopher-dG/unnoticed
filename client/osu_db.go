@@ -80,6 +80,12 @@ func NewOsuDB(path string) (*OsuDB, error) {
 type OsuDBBeatmap struct {
 	MD5       string `json:"file_md5"`
 	BeatmapID uint32 `json:"beatmap_id"`
+	Status    byte   `json:"-"`
+}
+
+// Unranked returns whether or not the beatmap is unranked.
+func (b OsuDBBeatmap) Unranked() bool {
+	return b.Status < 4 || b.Status == 6
 }
 
 // parseOsuDBBeatmap parses a single beatmap from the reader.
@@ -105,13 +111,19 @@ func parseOsuDBBeatmap(r io.ReadSeeker) (b OsuDBBeatmap, err error) {
 	if b.MD5, err = readString(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
-	if err = skipString(r); err != nil { // .osu file name.
+
+	// Skipping: .osu file name.
+	if err = skipString(r); err != nil {
+		return OsuDBBeatmap{}, err
+	}
+
+	if b.Status, err = readByte(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
 
 	// Skipping: Ranked status, hitcircles, sliders, spinners, last modification time,
 	// approach rate, circle size, HP drain, overall difficulty, and slider velocity.
-	if _, err = r.Seek(SizeByte+SizeShort+SizeShort+SizeShort+SizeLong+SizeSingle+SizeSingle+SizeSingle+SizeSingle+SizeDouble, io.SeekCurrent); err != nil {
+	if _, err = r.Seek(SizeShort+SizeShort+SizeShort+SizeLong+SizeSingle+SizeSingle+SizeSingle+SizeSingle+SizeDouble, io.SeekCurrent); err != nil {
 		return OsuDBBeatmap{}, err
 	}
 
