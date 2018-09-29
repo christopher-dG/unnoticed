@@ -41,7 +41,7 @@ func NewScoresDB(path string) (*ScoresDB, error) {
 // ScoresDBBeatmap is a beatmap found in scores.db.
 type ScoresDBBeatmap struct {
 	MD5    string
-	Scores []Score
+	Scores []ScoresDBScore
 }
 
 // parseScoresDBBeatmap parses a single beatmap and its scores from the reader.
@@ -58,7 +58,7 @@ func parseScoresDBBeatmap(r io.ReadSeeker) (ScoresDBBeatmap, error) {
 	}
 
 	for i := uint32(0); i < n; i++ {
-		s, err := parseScore(r)
+		s, err := parseScoresDBScore(r)
 		if err != nil {
 			return ScoresDBBeatmap{}, err
 		}
@@ -68,96 +68,96 @@ func parseScoresDBBeatmap(r io.ReadSeeker) (ScoresDBBeatmap, error) {
 	return *b, nil
 }
 
-// Score is a score found in a ScoresDBBeatmap.
+// ScoresDBScore is a score found in a ScoresDBBeatmap.
 // Fields to fill in server-side:
 // - user_id
 // - pp
 // - beatmap_id
 // - rank
-type Score struct {
-	GameMode   uint8
-	BeatmapMD5 string // Needed for beatmap versioning.
-	PlayerName string
-	ReplayMD5  string
-	Count300   uint16
-	Count100   uint16
-	Count50    uint16
-	CountGeki  uint16
-	CountKatu  uint16
-	CountMiss  uint16
-	Score      uint32
-	MaxCombo   uint16
-	Perfect    bool
-	Mods       uint32
-	Timestamp  uint64
+type ScoresDBScore struct {
+	GameMode   uint8  `json:"mode"`
+	BeatmapMD5 string `json:"beatmap_md5"` // Needed for beatmap versioning.
+	PlayerName string `json:"player"`
+	ReplayMD5  string `json:"replay_md5"`
+	Count300   uint16 `json:"count300"`
+	Count100   uint16 `json:"count100"`
+	Count50    uint16 `json:"count50"`
+	CountGeki  uint16 `json:"countgeki"`
+	CountKatu  uint16 `json:"countkatu"`
+	CountMiss  uint16 `json:"countmiss"`
+	Score      uint32 `json:"score"`
+	MaxCombo   uint16 `json:"maxcombo"`
+	Perfect    bool   `json:"perfect"`
+	Mods       uint32 `json:"enabled_mods"`
+	Timestamp  uint64 `json:"date:"`
 }
 
 // parseScore parses a single score from the reader.
-func parseScore(r io.ReadSeeker) (Score, error) {
-	s := Score{}
+func parseScoresDBScore(r io.ReadSeeker) (ScoresDBScore, error) {
+	s := ScoresDBScore{}
 	var err error
 
 	if s.GameMode, err = readByte(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 
 	// Skipping: Version.
 	if _, err = r.Seek(SizeInt, io.SeekCurrent); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 
 	if s.BeatmapMD5, err = readString(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.PlayerName, err = readString(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.ReplayMD5, err = readString(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.Count300, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.Count100, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.Count50, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.CountGeki, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.CountKatu, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.CountMiss, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.Score, err = readInt(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.MaxCombo, err = readShort(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.Perfect, err = readBool(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 	if s.Mods, err = readInt(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 
 	// Skipping: "Empty" string (not always the case).
 	if err := skipString(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 
 	if s.Timestamp, err = readLong(r); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 
 	// Skipping: -1 and score ID.
 	if _, err = r.Seek(SizeInt+SizeLong, io.SeekCurrent); err != nil {
-		return Score{}, err
+		return ScoresDBScore{}, err
 	}
 
 	return s, nil

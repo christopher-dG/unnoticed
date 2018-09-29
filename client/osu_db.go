@@ -8,11 +8,13 @@ import (
 
 const modern = 20140609
 
-var ErrDBTooOld = errors.New("database version too old")
+var (
+	ErrDBOutdated = errors.New("database version too old")
+	ErrRestricted = errors.New("user is restricted")
+)
 
 // OsuDB is a parsed osu!.db file containing beatmap information.
 type OsuDB struct {
-	Unlocked   bool
 	PlayerName string
 	Beatmaps   []OsuDBBeatmap
 }
@@ -28,7 +30,7 @@ func NewOsuDB(path string) (*OsuDB, error) {
 	if v, err := readInt(r); err != nil {
 		return nil, err
 	} else if v < modern {
-		return nil, ErrDBTooOld
+		return nil, ErrDBOutdated
 	}
 
 	// Skipping: Number of folders.
@@ -36,9 +38,10 @@ func NewOsuDB(path string) (*OsuDB, error) {
 		return nil, err
 	}
 
-	db := &OsuDB{}
-	if db.Unlocked, err = readBool(r); err != nil {
+	if unlocked, err := readBool(r); err != nil {
 		return nil, err
+	} else if !unlocked {
+		return nil, ErrRestricted
 	}
 
 	// Skipping: Account unlock date.
@@ -46,10 +49,10 @@ func NewOsuDB(path string) (*OsuDB, error) {
 		return nil, err
 	}
 
+	db := &OsuDB{}
 	if db.PlayerName, err = readString(r); err != nil {
 		return nil, err
 	}
-
 	n, err := readInt(r)
 	if err != nil {
 		return nil, err
@@ -68,9 +71,8 @@ func NewOsuDB(path string) (*OsuDB, error) {
 // OsuDBBeatmap is a beatmap found in osu!.db.
 // We're skipping just about everything here, but we'll fill it in server side.
 type OsuDBBeatmap struct {
-	MD5          string
-	BeatmapID    uint32
-	BeatmapsetID uint32
+	MD5       string `json:"file_md5"`
+	BeatmapID uint32 `json:"beatmap_id"`
 }
 
 // parseOsuDBBeatmap parses a single beatmap from the reader.
@@ -132,9 +134,6 @@ func parseOsuDBBeatmap(r io.ReadSeeker) (b OsuDBBeatmap, err error) {
 	}
 
 	if b.BeatmapID, err = readInt(r); err != nil {
-		return OsuDBBeatmap{}, err
-	}
-	if b.BeatmapsetID, err = readInt(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
 

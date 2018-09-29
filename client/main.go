@@ -31,7 +31,7 @@ func main() {
 		}
 
 		log.Println("uploading scores")
-		if err := PutScores(db); err != nil {
+		if err := PutScores(*db); err != nil {
 			userLog(err)
 		}
 

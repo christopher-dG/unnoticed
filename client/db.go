@@ -28,6 +28,27 @@ func NewDB(osuRoot string) (*DB, error) {
 }
 
 // Wait blocks until the scores.db is updated.
-func (db *DB) Wait() error {
+func (db DB) Wait() error {
 	return Wait(db.Dir, "scores.db")
+}
+
+// Payload returns the request body for uploading scores.
+func (db DB) Payload(exclude []string) map[string]interface{} {
+	var scores []ScoresDBScore
+	scoreMap := make(map[string]bool)
+	for _, s := range exclude {
+		scoreMap[s] = true
+	}
+	for _, b := range db.Scores.Beatmaps {
+		for _, s := range b.Scores {
+			if _, ok := scoreMap[s.ReplayMD5]; !ok {
+				scores = append(scores, s)
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"beatmaps": db.Osu.Beatmaps,
+		"scores":   scores,
+	}
 }
