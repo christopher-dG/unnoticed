@@ -36,7 +36,7 @@ def get_scores(sess, beatmap_id, u=None, m=0, mods=None, type=None, limit=50):
     if u is not None:
         filters.append(_field(u, type) == u)
     if mods is not None:
-        filters.append(Score.mods == mods)
+        filters.append(Score.enabled_mods == mods)
 
     scores = (
         sess.query(Score)
@@ -54,7 +54,7 @@ def get_user_best(sess, user, m=0, limit=10, type=None):
     """Gets a single user's best scores (by pp)."""
     filters = [_field(user, type) == user]
     if mods is not None:
-        filters.append(Score.mods == mods)
+        filters.append(Score.enabled_mods == mods)
 
     scores = (
         sess.query(Score).filter(*filters).order_by(desc(Score.pp)).limit(limit).all()

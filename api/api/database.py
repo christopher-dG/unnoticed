@@ -44,39 +44,8 @@ class Player(Base):
 
 class Beatmap(Base):
     __tablename__ = "beatmaps"
-
     beatmap_id = Column(Integer, primary_key=True)
-    beatmapset_id = Column(Integer, nullable=False)
-
-    # These must be constantly updated.
-    file_md5 = Column(String(32), nullable=False, unique=True)
-    approved = Column(Integer, nullable=False)
-    approved_date = Column(DateTime, nullable=False)
-    last_update = Column(DateTime, nullable=False)
-
-    artist = Column(Text, nullable=False)
-    bpm = Column(Float, nullable=False)
-    creator = Column(Text, nullable=False)
-    difficultyrating = Column(Float, nullable=False)
-    diff_size = Column(Float, nullable=False)
-    diff_overall = Column(Float, nullable=False)
-    diff_approach = Column(Float, nullable=False)
-    diff_drain = Column(Float, nullable=False)
-    hit_length = Column(Integer, nullable=False)
-    source = Column(Text, nullable=False)
-    genre_id = Column(Integer, nullable=False)
-    language_id = Column(Integer, nullable=False)
-    title = Column(Text, nullable=False)
-    total_length = Column(Integer, nullable=False)
-    version = Column(Text, nullable=False)
-    mode = Column(Integer, nullable=False)
-    tags = Column(Text, nullable=False)
-    max_combo = Column(Integer, nullable=False)
-
-    # Intentionally omitted:
-    # - favourite_count
-    # - playcount
-    # - passcount
+    file_md5 = Column(String(32), nullable=False, primary_key=True)
 
 
 class Score(Base):
@@ -90,7 +59,7 @@ class Score(Base):
     username = Column(Text, ForeignKey("players.username"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("players.user_id"), nullable=False, index=True)
 
-    mode = Column(Integer, nullable=False)
+    mode = Column(Integer, nullable=False, index=True)
     beatmap_md5 = Column(String(32), nullable=False)
     replay_md5 = Column(String(32), nullable=False)
     count300 = Column(Integer, nullable=False)
@@ -102,7 +71,7 @@ class Score(Base):
     score = Column(Integer, nullable=False)
     maxcombo = Column(Integer, nullable=False)
     perfect = Column(Boolean, nullable=False)
-    enabled_mods = Column(Integer, nullable=False)
+    enabled_mods = Column(Integer, nullable=False, index=True)
     date = Column(DateTime, nullable=False)
     accuracy = Column(Float, nullable=False)
     rank = Column(String(3), nullable=False)
@@ -130,14 +99,3 @@ class Score(Base):
             "accuracy": self.accuracy,
             "pp": self.pp,
         }
-
-
-class BeatmapHash(Base):
-    __tablename__ = "beatmap_hashes"
-    beatmap_id = Column(Integer, ForeignKey("beatmaps.beatmap_id"), primary_key=True)
-    file_md5 = Column(String(32), ForeignKey("beatmaps.file_md5"), primary_key=True)
-
-
-class IncompleteMapset(Base):
-    __tablename__ = "incomplete_mapsets"
-    beatmapset_id = Column(Integer, primary_key=True)
