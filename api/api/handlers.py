@@ -3,7 +3,7 @@ import json
 import os
 import osuapi
 
-from api import databae, players, scores
+from api import database, players, scores
 
 
 application_json = {"Content-Type": "application/json"}
