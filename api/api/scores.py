@@ -1,6 +1,8 @@
 from sqlalchemy import desc
 from sqlalchemy.orm import load_only
 
+from api import utils
+from api.beatmaps import beatmap_from_md5
 from api.database import Score
 
 
@@ -15,6 +17,16 @@ def _field(u, type):
         return Score.user_id if isinstance(u, type) else Score.username
 
 
+def _outdated(score):
+    """
+    Checks if a score is outdated and adds the result to the dict.
+    If the current MD5 can't be determined, the value is None.
+    """
+    md5 = utils.osu_beatmap_md5(score.beatmap_id)
+    outdated = None if md5 is None else md5 == score.beatmap_md5
+    return {**score, "outdated": outdated}
+
+
 def get_score_hashes(sess, user):
     """Returns the replay hash of every score by user."""
     scores = (
@@ -27,7 +39,31 @@ def get_score_hashes(sess, user):
 
 
 def put_scores(sess, user, scores):
-    pass
+    """Inserts the given scores. Returns the number of new scores."""
+    # TODO: Will this take too much memory? Maybe not, 1,000,000 * 32 is just 32MB.
+    md5s = {
+        s.replay_md5: True
+        for s in sess.query(Score)
+        .filter(
+            Score.user_id == user, Score.replay_md5 in [s["replay_md5"] for s in scores]
+        )
+        .options(load_only("replay_md5"))
+        .all()
+    }
+
+    new = 0
+    for s in scores:
+        if s["replay_md5"] in md5s:
+            continue
+
+        new += 1
+        sc = Score.from_dict(s)
+        sc.user_id = user
+        sc.beatmap_id = beatmap_from_md5(sc.beatmap_md5)
+        # Stil leave pp null here, we'll fill it in in the background.
+        sess.add(sc)
+
+    return new
 
 
 def get_scores(sess, beatmap_id, u=None, m=0, mods=None, type=None, limit=50):
@@ -47,7 +83,7 @@ def get_scores(sess, beatmap_id, u=None, m=0, mods=None, type=None, limit=50):
         .all()
     )
 
-    return [s.dict() for s in scores]
+    return [_outdated(s.dict()) for s in scores]
 
 
 def get_user_best(sess, user, m=0, limit=10, type=None):
@@ -60,7 +96,7 @@ def get_user_best(sess, user, m=0, limit=10, type=None):
         sess.query(Score).filter(*filters).order_by(desc(Score.pp)).limit(limit).all()
     )
 
-    return [s.dict() for s in scores]
+    return [_outdated(s.dict()) for s in scores]
 
 
 def get_user_recent(sess, user, m=0, limit=10, type=None):
@@ -71,4 +107,4 @@ def get_user_recent(sess, user, m=0, limit=10, type=None):
         .order_by(desc(Score.date))
     )
 
-    return [s.dict() for s in scores]
+    return [_outdated(s.dict()) for s in scores]

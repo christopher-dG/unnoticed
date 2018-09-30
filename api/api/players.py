@@ -1,10 +1,12 @@
 from api.database import Player
 
 
-def put_new_player(session, user_id, username):
-    """Inserts a new player."""
-    if not session.query(Player).get(user_id):
+def put_new_player(sess, user_id, username):
+    """Inserts a new player. Also handles name changes."""
+    p = sess.query(Player).get(user_id)
+    if p and p.username != username:
+        p.username = username
+    else:
         p = Player(user_id=user_id, username=username)
-        sesson.add(p)
-        return p
-    return None
+        sess.add(p)
+    return p

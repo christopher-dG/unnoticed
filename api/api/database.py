@@ -14,6 +14,8 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from api import utils
+
 
 Base = declarative_base()
 DBSession = None
@@ -77,7 +79,34 @@ class Score(Base):
     rank = Column(String(3), nullable=False)
     pp = Column(Float, nullable=True)
 
-    def dict(self):
+    def from_dict(d):
+        """
+        Construct a Score from a dict.
+        These fields are left empty (they require disk access or external commands):
+        - beatmap_id
+        - user_id
+        - pp
+        """
+        return Score(
+            username=d["username"],
+            beatmap_md5=d["beatmap_md5"],
+            replay_md5=d["replay_md5"],
+            count300=d["count300"],
+            count100=d["count100"],
+            count50=d["count50"],
+            countgeki=d["countgeki"],
+            countkatu=d["countkatu"],
+            countmiss=d["countmiss"],
+            score=d["score"],
+            maxcombo=d["maxcombo"],
+            perfect=d["perfect"],
+            enabled_mods=d["enabled_mods"],
+            date=utils.from_winticks(d["date"]),
+            accuracy=utils.utils.accuracy(d),
+            rank=utils.rank(d),
+        )
+
+    def to_dict(self):
         return {
             "beatmap_id": self.beatmap_id,
             "username": self.username,

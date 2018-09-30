@@ -32,10 +32,6 @@ functions:
     handler: api.handlers.get_user_recent
     events:
       - http: GET api/get_user_recent
-  mapset_maintenance:
-    handler: api.handler.mapset_maintenance
-    events:
-      - schedule: rate(8 hours)
 
 plugins:
   - serverless-python-requirements

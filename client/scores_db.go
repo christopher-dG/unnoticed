@@ -79,7 +79,7 @@ func parseScoresDBBeatmap(r io.ReadSeeker) (ScoresDBBeatmap, error) {
 type ScoresDBScore struct {
 	GameMode   uint8  `json:"mode"`
 	BeatmapMD5 string `json:"beatmap_md5"` // Needed for beatmap versioning.
-	PlayerName string `json:"player"`
+	PlayerName string `json:"username"`
 	ReplayMD5  string `json:"replay_md5"`
 	Count300   uint16 `json:"count300"`
 	Count100   uint16 `json:"count100"`
