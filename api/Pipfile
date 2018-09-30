@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 sqlalchemy = {version = "*", extras = ["postgresql"]}
 osuapi = "*"
-requests = "*"
+requests-cache = "*"
 
 [dev-packages]
 black = "*"

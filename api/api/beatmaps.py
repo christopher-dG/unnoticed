@@ -5,18 +5,18 @@ from api.database import DBSession, Beatmap
 
 def put_beatmaps(sess, beatmaps):
     """Inserts the given beatmaps."""
-    # TODO: Will this take too much memory? Maybe not, 1,000,000 * 32 is just 32MB.
     md5s = {
         b.file_md5: True
-        for b in sess.query(Beatmap).options(load_only("beatmap_md5")).all()
+        for b in sess.query(Beatmap).options(load_only("file_md5")).all()
     }
 
     new = 0
     for b in beatmaps:
-        if b.file_md5 in md5s:
+        if b["file_md5"] in md5s:
             continue
 
         new += 1
+        md5s[b["file_md5"]] = True
         sess.add(Beatmap(beatmap_id=b["beatmap_id"], file_md5=b["file_md5"]))
 
     return new

@@ -3,7 +3,7 @@ from sqlalchemy.orm import load_only
 
 from api import utils
 from api.beatmaps import beatmap_from_md5
-from api.database import Score
+from api.database import Beatmap, Score
 
 
 def _field(u, type):
@@ -17,13 +17,16 @@ def _field(u, type):
         return Score.user_id if isinstance(u, type) else Score.username
 
 
-def _outdated(score):
+def _outdated(sess, score):
     """
     Checks if a score is outdated and adds the result to the dict.
     If the current MD5 can't be determined, the value is None.
     """
     md5 = utils.osu_beatmap_md5(score.beatmap_id)
     outdated = None if md5 is None else md5 == score.beatmap_md5
+    b = sess.query(Beatmap).get(score["beatmap_id"]).first()
+    if b:
+        b.file_md5 = md5
     return {**score, "outdated": outdated}
 
 
@@ -40,7 +43,6 @@ def get_score_hashes(sess, user):
 
 def put_scores(sess, user, scores):
     """Inserts the given scores. Returns the number of new scores."""
-    # TODO: Will this take too much memory? Maybe not, 1,000,000 * 32 is just 32MB.
     md5s = {
         s.replay_md5: True
         for s in sess.query(Score)

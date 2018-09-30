@@ -3,7 +3,7 @@ import json
 import os
 import osuapi
 import re
-import requests
+import requests_cache
 
 _application_json = {"Content-Type": "application/json"}
 _text_plain = {"Content-Type": "text/plain"}
@@ -15,8 +15,9 @@ _user_json_re = re.compile(
     + "(.*?)"
     + re.escape("</script>")
 )
+_sess = requests_cache.CachedSession(backend="memory")
 _osu = osuapi.OsuApi(
-    os.getenv("OSU_API_KEY"), connector=osuapi.connectors.ReqConnector()
+    os.getenv("OSU_API_KEY"), connector=osuapi.connectors.ReqConnector(sess=_sess)
 )
 _mods = {
     "": 0,
@@ -90,9 +91,9 @@ def osu_beatmap_md5(beatmap_id):
     return b[0].file_md5 if b else None
 
 
-def osu_previous_usernames(user_is):
+def osu_previous_usernames(user_id):
     """Get a user's previous usernames."""
-    resp = requests.get(f"https://osu.ppy.sh/users/{user_id}")
+    resp = _sess.get(f"https://osu.ppy.sh/users/{user_id}")
     if resp.status_code != 200:
         return []
     match = _user_json_re.search(resp.text.replace("\n", ""))

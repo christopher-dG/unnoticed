@@ -13,6 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func
 
 from api import utils
 
@@ -46,8 +47,8 @@ class Player(Base):
 
 class Beatmap(Base):
     __tablename__ = "beatmaps"
-    beatmap_id = Column(Integer, primary_key=True)
-    file_md5 = Column(String(32), nullable=False, primary_key=True)
+    beatmap_id = Column(Integer, unique=False, primary_key=True)
+    file_md5 = Column(String(32), unique=True, primary_key=True)
 
 
 class Score(Base):
@@ -55,14 +56,13 @@ class Score(Base):
 
     id = Column(Integer, primary_key=True)  # Serial.
 
-    beatmap_id = Column(
-        Integer, ForeignKey("beatmaps.beatmap_id"), nullable=False, index=True
-    )
+
+    beatmap_md5 = Column(String(32), ForeignKey("beatmaps.file_md5"), nullable=False, index=True)
     username = Column(Text, ForeignKey("players.username"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("players.user_id"), nullable=False, index=True)
 
+    beatmap_id = Column(Integer, nullable=False, index=True)
     mode = Column(Integer, nullable=False, index=True)
-    beatmap_md5 = Column(String(32), nullable=False)
     replay_md5 = Column(String(32), nullable=False)
     count300 = Column(Integer, nullable=False)
     count100 = Column(Integer, nullable=False)
@@ -78,6 +78,7 @@ class Score(Base):
     accuracy = Column(Float, nullable=False)
     rank = Column(String(3), nullable=False)
     pp = Column(Float, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
 
     def from_dict(d):
         """
