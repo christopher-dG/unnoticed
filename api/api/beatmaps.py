@@ -1,4 +1,4 @@
-from .database import DBSession, Beatmap
+from api.database import DBSession, Beatmap
 
 
 def put_beatmaps(beatmaps):

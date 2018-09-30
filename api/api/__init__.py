@@ -1,1 +1,1 @@
-from . import database, beatmaps, scores
+from . import database, beatmaps, scores, handlers

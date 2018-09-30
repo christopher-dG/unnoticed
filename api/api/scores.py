@@ -1,7 +1,7 @@
 from sqlalchemy import desc
 from sqlalchemy.orm import load_only
 
-from .database import Score
+from api.database import Score
 
 
 def _field(u, type):

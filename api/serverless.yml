@@ -5,6 +5,7 @@ provider:
   runtime: python3.6
 
 environment:
+  OSU_API_KEY: ${env:OSU_API_KEY}
   PGHOST: ${env:PGHOST}
   PGUSER: ${env:PGUSER}
   PGPASSWORD: ${env:PGPASSWORD}
@@ -14,33 +15,23 @@ functions:
   get_score_hashes:
     handler: api.handlers.get_score_hashes
     events:
-      - http:
-          method: get
-          path: client/get_score_hashes
+      - http: GET client/get_score_hashes/{user}
   put_scores:
     handler: api.handlers.put_scores
     events:
-      - http:
-          method: post
-          path: client/put_scores
+      - http: POST client/put_scores/{user}
   get_scores:
     handler: api.handlers.get_scores
     events:
-      - http:
-          method: get
-          path: api/get_scores
+      - http: GET api/get_scores
   get_user_best:
     handler: api.handlers.get_user_best
     events:
-      - http:
-          method: get
-          path: api/get_user_best
+      - http: GET api/get_user_best
   get_user_recent:
     handler: api.handlers.get_user_recent
     events:
-      - http:
-          method: get
-          path: api/get_user_recent
+      - http: GET api/get_user_recent
   mapset_maintenance:
     handler: api.handler.mapset_maintenance
     events:

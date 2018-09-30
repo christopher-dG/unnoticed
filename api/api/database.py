@@ -15,6 +15,24 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
+DBSession = None
+
+_u = os.getenv("PGUSER", "postgres")
+_p = os.getenv("PGPASSWORD", "")
+_h = os.getenv("PGHOST", "localhost")
+_d = os.getenv("PGDATABASE", _u)
+
+
+def connect():
+    engine = create_engine(f"postgresql://{_u}:{_p}@{_h}/{_d}")
+    Base.metadata.bind = engine
+    Base.metadata.create_all(engine)
+    global DBSession
+    DBSession = sessionmaker(bind=engine)
+
+
+def session():
+    return DBSession()
 
 
 class Player(Base):
@@ -114,21 +132,11 @@ class Score(Base):
 
 
 class BeatmapHash(Base):
-    __table__name = "beatmap_hashes"
+    __tablename__ = "beatmap_hashes"
     beatmap_id = Column(Integer, ForeignKey("beatmaps.beatmap_id"), primary_key=True)
-    file_md5 = Column(Integer, ForeignKey("beatmaps.file_md5"), primary_key=True)
+    file_md5 = Column(String(32), ForeignKey("beatmaps.file_md5"), primary_key=True)
 
 
 class IncompleteMapset(Base):
     __tablename__ = "incomplete_mapsets"
     beatmapset_id = Column(Integer, primary_key=True)
-
-
-_u = os.getenv("PGUSER", "postgres")
-_p = os.getenv("PGPASSWORD", "")
-_h = os.getenv("PGHOST", "localhost")
-_d = os.getenv("PGDATABASE", _u)
-engine = create_engine(f"postgresql://{_u}:{_p}@{_h}/{_d}")
-Base.metadata.bind = engine
-Base.metadata.create_all(engine)
-DBSession = sessionmaker(bind=engine)
