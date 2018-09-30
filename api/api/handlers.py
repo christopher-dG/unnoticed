@@ -6,12 +6,12 @@ empty = utils.response(200, [])
 
 def get_score_hashes(event, context):
     """
-    Handler for /client/get_score_hashes/{user}.
+    Handler for /client/get_score_hashes/{username}.
     Returns a list of replay hashes for each score by the user already stored.
     """
-    if not event["pathParameters"] or not event["pathParameters"].get("user"):
-        return utils.response(400, "missing required path parameter 'user'")
-    username = event["pathParameters"]["user"].strip()
+    if not event["pathParameters"] or not event["pathParameters"].get("username"):
+        return utils.response(400, "missing required path parameter 'username'")
+    username = event["pathParameters"]["username"].strip()
     print(f"username: {username}")
     user_id = utils.osu_id(username)
     print(f"user ID: {user_id}")
@@ -24,7 +24,7 @@ def get_score_hashes(event, context):
     hashes = scores.get_score_hashes(sess, user_id)
     sess.commit()
 
-    return utils.response(200, hashes)
+    return utils.response(200, {"user_id": user_id, "scores": hashes})
 
 
 def put_scores(event, context):
@@ -32,8 +32,8 @@ def put_scores(event, context):
     Handler for /client/put_scores/{user}.
     Inserts scores sent by the user.
     """
-    if not event["pathParameters"] or not event["pathParameters"].get("user"):
-        return utils.response(400, "missing required path parameter 'user'")
+    if not event["pathParameters"] or not event["pathParameters"].get("user_id"):
+        return utils.response(400, "missing required path parameter 'user_id'")
     body = utils.parse(event["body"])
     if body is None:
         return utils.response(400, "invalid request body")
@@ -48,18 +48,15 @@ def put_scores(event, context):
     beatmaps = body.get("beatmaps")
     if beatmaps is None:
         return utils.response(400, "missing required body parameter 'beatmaps'")
-    username = event["pathParameters"]["user"].strip()
-    print(f"username: {username}")
-    user_id = utils.osu_id(username)
+    user_id = event["pathParameters"]["user_id"]
     print(f"user ID: {user_id}")
-    if user_id is None:
-        return utils.response(400, "user does not exist")
 
     database.connect()
     sess = session()
+    # No need to put_new_player here, because calling this endpoint always comes
+    # after get_score_hashes which inserts the player if necessary.
     n = beatmaps.put_beatmaps(sess, beatmaps)
     print(f"inserted {n} new beatmap{'' if n == 0 else 's'}")
-    players.put_new_player(sess, user_id, username)
     n = scores.put_scores(sess, user_id, scores)
     print(f"inserted {n} new score{'' if n == 0 else 's'}")
     sess.commit()

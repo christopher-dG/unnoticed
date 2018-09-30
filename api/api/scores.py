@@ -51,10 +51,17 @@ def put_scores(sess, user, scores):
         .all()
     }
 
+    u = sess.query(Player).get(user)
+    username = u.username
+    prev_usernames = utils.osu_previous_usernames(user)
     new = 0
     for s in scores:
         if s["replay_md5"] in md5s:
             continue
+        if s["username"] != username and s["username"] not in prev_usernames:
+            continue
+        elif s["username"] != username:
+            s["username"] = username
 
         new += 1
         sc = Score.from_dict(s)

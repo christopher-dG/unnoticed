@@ -2,12 +2,19 @@ import datetime
 import json
 import os
 import osuapi
+import re
+import requests
 
 _application_json = {"Content-Type": "application/json"}
 _text_plain = {"Content-Type": "text/plain"}
 _datefmt = "%Y-%m-%d %H:%M:%S"
 _epoch_ticks = 621_355_968_000_000_000
 _ticks_per_s = 10_000_000
+_user_json_re = re.compile(
+    re.escape('<script id="json-user" type="application/json">')
+    + "(.*?)"
+    + re.escape("</script>")
+)
 _osu = osuapi.OsuApi(
     os.getenv("OSU_API_KEY"), connector=osuapi.connectors.ReqConnector()
 )
@@ -81,6 +88,21 @@ def osu_beatmap_md5(beatmap_id):
         return None
     b = _osu.get_beatmaps(beatmap_id=beatmap_id)
     return b[0].file_md5 if b else None
+
+
+def osu_previous_usernames(user_is):
+    """Get a user's previous usernames."""
+    resp = requests.get(f"https://osu.ppy.sh/users/{user_id}")
+    if resp.status_code != 200:
+        return []
+    match = _user_json_re.search(resp.text.replace("\n", ""))
+    if not match:
+        return []
+    try:
+        d = json.loads(match.group(1))
+    except:
+        return []
+    return d.get("previous_usernames", [])
 
 
 def get_int(val, default):

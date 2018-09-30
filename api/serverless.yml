@@ -3,23 +3,22 @@ service: unnoticed-api
 provider:
   name: aws
   runtime: python3.6
-
-environment:
-  OSU_API_KEY: ${env:OSU_API_KEY}
-  PGHOST: ${env:PGHOST}
-  PGUSER: ${env:PGUSER}
-  PGPASSWORD: ${env:PGPASSWORD}
-  PGDATABASE: ${env:PGDATABASE}
+  environment:
+    OSU_API_KEY: ${env:OSU_API_KEY}
+    PGHOST: ${env:PGHOST}
+    PGUSER: ${env:PGUSER}
+    PGPASSWORD: ${env:PGPASSWORD}
+    PGDATABASE: ${env:PGDATABASE}
 
 functions:
   get_score_hashes:
     handler: api.handlers.get_score_hashes
     events:
-      - http: GET client/get_score_hashes/{user}
+      - http: GET client/get_score_hashes/{username}
   put_scores:
     handler: api.handlers.put_scores
     events:
-      - http: POST client/put_scores/{user}
+      - http: POST client/put_scores/{user_id}
   get_scores:
     handler: api.handlers.get_scores
     events:

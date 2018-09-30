@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -22,6 +23,12 @@ var (
 	ErrBadStatus = errors.New("non-200 response")
 )
 
+// GetScoreHashesResp is the response from the get_score_hashes endpoint.
+type GetScoreHashesResp struct {
+	UserID int      `json:"user_id"`
+	Scores []string `json:"scores"`
+}
+
 // checkReadResp checks a response's success and returns its body.
 func checkReadResp(r *http.Response) ([]byte, error) {
 	defer r.Body.Close()
@@ -32,7 +39,7 @@ func checkReadResp(r *http.Response) ([]byte, error) {
 	}
 
 	if r.StatusCode != http.StatusOK {
-		log.Println("status code:", r.StatusCode, r.Status)
+		log.Println("status code:", r.Status)
 		if len(b) > 0 {
 			log.Println("body:", string(b))
 		}
@@ -43,36 +50,36 @@ func checkReadResp(r *http.Response) ([]byte, error) {
 }
 
 // getScoreHashes gets a list of all scores that are already stored.
-func getScoreHashes(db DB) ([]string, error) {
+func getScoreHashes(db DB) (GetScoreHashesResp, error) {
 	log.Println("GET:", getScoreHashesEndpoint+db.Osu.PlayerName)
 	r, err := httpClient.Get(apiURL + getScoreHashesEndpoint + db.Osu.PlayerName)
 	if err != nil {
-		return nil, err
+		return GetScoreHashesResp{}, err
 	}
 
 	b, err := checkReadResp(r)
 	if err != nil {
-		return nil, err
+		return GetScoreHashesResp{}, err
 	}
 
-	var hashes []string
-	err = json.Unmarshal(b, &hashes)
-	return hashes, err
+	var sh GetScoreHashesResp
+	err = json.Unmarshal(b, &sh)
+	return sh, err
 }
 
 // PutScores uploads scores.
 func PutScores(db DB) error {
-	exclude, err := getScoreHashes(db)
+	sh, err := getScoreHashes(db)
 	if err != nil {
 		return err
 	}
 
-	b, err := json.Marshal(db.Payload(exclude))
+	b, err := json.Marshal(db.Payload(sh.Scores))
 	if err != nil {
 		return err
 	}
 
-	log.Println("POST:", putScoresEndpoint+db.Osu.PlayerName)
+	log.Println("POST:", putScoresEndpoint+strconv.Itoa(sh.UserID))
 	r, err := httpClient.Post(
 		apiURL+putScoresEndpoint+db.Osu.PlayerName,
 		"application/json",
