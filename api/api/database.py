@@ -21,6 +21,7 @@ from api import utils
 Base = declarative_base()
 DBSession = None
 
+# PostgreSQL connection parameters.
 _u = os.getenv("PGUSER", "postgres")
 _p = os.getenv("PGPASSWORD", "")
 _h = os.getenv("PGHOST", "localhost")
@@ -28,6 +29,7 @@ _d = os.getenv("PGDATABASE", _u)
 
 
 def connect():
+    """Connects to the database. Calling session before this will fail!"""
     engine = create_engine(f"postgresql://{_u}:{_p}@{_h}/{_d}")
     Base.metadata.bind = engine
     Base.metadata.create_all(engine)
@@ -36,28 +38,38 @@ def connect():
 
 
 def session():
+    """Returns a database session. You must call connect first!"""
     return DBSession()
 
 
 class Player(Base):
+    """An osu! user."""
+
     __tablename__ = "players"
     user_id = Column(Integer, primary_key=True)
     username = Column(Text, nullable=False, unique=True, index=True)
 
 
 class Beatmap(Base):
+    """An osu! beatmap."""
+
     __tablename__ = "beatmaps"
     beatmap_id = Column(Integer, unique=False, primary_key=True)
     file_md5 = Column(String(32), unique=True, primary_key=True)
 
 
 class Score(Base):
+    """An osu! score."""
+
     __tablename__ = "scores"
 
-    id = Column(Integer, primary_key=True)  # Serial.
+    # These columns are generated for us upon insert.
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
 
-
-    beatmap_md5 = Column(String(32), ForeignKey("beatmaps.file_md5"), nullable=False, index=True)
+    beatmap_md5 = Column(
+        String(32), ForeignKey("beatmaps.file_md5"), nullable=False, index=True
+    )
     username = Column(Text, ForeignKey("players.username"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("players.user_id"), nullable=False, index=True)
 
@@ -78,7 +90,6 @@ class Score(Base):
     accuracy = Column(Float, nullable=False)
     rank = Column(String(3), nullable=False)
     pp = Column(Float, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
 
     def from_dict(d):
         """
@@ -108,6 +119,7 @@ class Score(Base):
         )
 
     def to_dict(self):
+        """Converts the score to a dict."""
         return {
             "beatmap_id": self.beatmap_id,
             "username": self.username,

@@ -5,20 +5,27 @@ import osuapi
 import re
 import requests_cache
 
+# Headers for API responses.
 _application_json = {"Content-Type": "application/json"}
 _text_plain = {"Content-Type": "text/plain"}
+# Format to render datetimes with.
 _datefmt = "%Y-%m-%d %H:%M:%S"
+# Windows ticks since the Unix epoch, and Windows ticks per second.
 _epoch_ticks = 621_355_968_000_000_000
 _ticks_per_s = 10_000_000
+# Regex to capture the user JSON from the osu! site.
 _user_json_re = re.compile(
     re.escape('<script id="json-user" type="application/json">')
     + "(.*?)"
     + re.escape("</script>")
 )
+# Cached session so that we don't repeat API calls.
 _sess = requests_cache.CachedSession(backend="memory")
+# osu! API client.
 _osu = osuapi.OsuApi(
     os.getenv("OSU_API_KEY"), connector=osuapi.connectors.ReqConnector(sess=_sess)
 )
+# Mapping of mods to their bit.
 _mods = {
     "": 0,
     "NF": 1,
@@ -53,7 +60,7 @@ _mods = {
 }
 
 
-def parse(body):
+def parse(body: str):
     """Parses the request body."""
     try:
         return json.loads(body)
@@ -62,12 +69,13 @@ def parse(body):
         return None
 
 
-def from_winticks(n):
+def from_winticks(n: int):
     """Converts a number of Windows ticks to a datetime."""
+    # Algorithm found here: http://www.tickstodatetime.com/
     return datetime.datetime.fromtimestamp(round((n - _epoch_ticks) / _ticks_per_s))
 
 
-def has_mod(score, mod):
+def has_mod(score: dict, mod: str):
     """Checks if a given mod was used for a score."""
     if not isinstance(score.get("enabled_mods"), int):
         return None
@@ -77,13 +85,13 @@ def has_mod(score, mod):
     return score.enabled_mods & m == m
 
 
-def osu_id(username):
+def osu_id(username: str):
     """Gets a user's user ID."""
     u = _osu.get_user(username)
     return u[0].user_id if u else None
 
 
-def osu_beatmap_md5(beatmap_id):
+def osu_beatmap_md5(beatmap_id: int):
     """Gets a beatmap's MD5 (from the osu! API)."""
     if beatmap_id is None:
         return None
@@ -91,22 +99,26 @@ def osu_beatmap_md5(beatmap_id):
     return b[0].file_md5 if b else None
 
 
-def osu_previous_usernames(user_id):
+def osu_previous_usernames(user_id: int):
     """Get a user's previous usernames."""
     resp = _sess.get(f"https://osu.ppy.sh/users/{user_id}")
+    # Get the user's web page.
     if resp.status_code != 200:
         return []
+    # Search it for the JSON data.
     match = _user_json_re.search(resp.text.replace("\n", ""))
     if not match:
         return []
+    # Load that data.
     try:
         d = json.loads(match.group(1))
     except:
         return []
+    # Return the previous usernames.
     return d.get("previous_usernames", [])
 
 
-def get_int(val, default):
+def get_int(val: str, default):
     """Parses val to an int, and returns default if it's not an int."""
     try:
         return int(val)
@@ -131,7 +143,7 @@ def stringify(x):
     return d
 
 
-def response(status, body):
+def response(status: int, body):
     """Returns an HTTP response."""
     if body is None:
         return {"statusCode": status, "body": ""}
@@ -145,7 +157,7 @@ def response(status, body):
         return {"statusCode": status, "headers": _text_plain, "body": body}
 
 
-def accuracy(score):
+def accuracy(score: dict):
     """Computes the accuracy of a score."""
     mode = score.get("mode")
     n300 = score.get("count300")
@@ -172,7 +184,7 @@ def accuracy(score):
     return 100 * a
 
 
-def grade(score):
+def grade(score: dict):
     """Computes the letter grade of a score."""
     mods = score["mode"]
     mode = score.get("mode")
