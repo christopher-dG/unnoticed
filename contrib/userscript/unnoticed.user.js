@@ -218,7 +218,7 @@ function return_scores(beatmap_id, mode, outdated, cb){
       url: api_base + beatmap_id,
       onload: function(response_raw){
           if(response_raw.status != 200){
-              console.log(response_raw.responseText);
+              console.log("[Unnoticed] HTTP ERROR: " + response_raw.responseText);
           }else{
               var response = JSON.parse(response_raw.responseText);
               var scores = [];
@@ -599,9 +599,7 @@ function zero_class(number){
 }
 
 function new_leaderboard(){
-    console.log("waiting for lb");
   $(document).arrive(".beatmapset-status--show", {existing: true}, function(){
-      console.log("loading lb");
     if($(".beatmapset-status--show").text() == "graveyard"
     || $(".beatmapset-status--show").text() == "wip"
     || $(".beatmapset-status--show").text() == "pending"){
@@ -609,7 +607,6 @@ function new_leaderboard(){
       var id_mode = window.location.hash.split("/");
       var mode = mode_number(id_mode[0].substr(1))
       var beatmap_id = id_mode[1];
-      console.log("retrieving scores for", beatmap_id, mode);
       return_scores(beatmap_id, mode, false, function(scores){
         if(scores.length > 0){
           var insert_html =
@@ -750,7 +747,6 @@ function new_leaderboard(){
 
 function page_change(){
   if(xhr) xhr.abort();
-  console.log("[Unnoticed] page change", window.location.pathname);
   if(window.location.pathname.startsWith("/s/") || window.location.pathname.startsWith("/b/")
   || window.location.pathname.startsWith("/p/beatmap")){
     if($(".beatmapTab").length > 0 && $("h2:contains(Top 50 Scoreboard)").length === 0)
