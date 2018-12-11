@@ -740,6 +740,7 @@ function new_leaderboard(){
           $(".osu-layout__section.osu-layout__section--extra").prepend(insert_html);
           $(".beatmapset-scoreboard__notice--no-scores").remove();
         }else{
+            $(".beatmapset-scoreboard__notice--no-scores").remove();
           $(".osu-layout__section.osu-layout__section--extra").prepend('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores osu-page osu-page--generic">No scores yet. Maybe you should try setting some?</p>');
         }
       });
