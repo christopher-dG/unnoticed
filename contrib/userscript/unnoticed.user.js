@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Unnoticed] Leaderboards
 // @namespace    https://github.com/christopher-dG/unnoticed
-// @version      1.2.1
+// @version      1.2.2
 // @description  Display unranked leaderboard entries gathered by [Unnoticed] on their respective beatmap pages
 // @author       LazyLea
 // @updateURL    https://github.com/christopher-dG/unnoticed/raw/master/contrib/userscript/unnoticed.user.js
@@ -218,7 +218,7 @@ function return_scores(beatmap_id, mode, outdated, cb){
       url: api_base + beatmap_id,
       onload: function(response_raw){
           if(response_raw.status != 200){
-              console.log(response_raw.responseText);
+              console.log("[Unnoticed] HTTP ERROR: " + response_raw.responseText);
           }else{
               var response = JSON.parse(response_raw.responseText);
               var scores = [];
@@ -599,19 +599,26 @@ function zero_class(number){
 }
 
 function new_leaderboard(){
-  $(document).arrive(".beatmapset-header__status, .beatmapset-scoreboard__main", {existing: true}, function(){
-    if($(".beatmapset-header__status").text() == "graveyard"
-    || $(".beatmapset-header__status").text() == "wip"
-    || $(".beatmapset-header__status").text() == "pending"){
-      $(".beatmapset-scoreboard__main").html('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores">Loading scores...</p>');
+  $(document).arrive(".beatmapset-status--show", {existing: true}, function(){
+    if($(".beatmapset-status--show").text() == "graveyard"
+    || $(".beatmapset-status--show").text() == "wip"
+    || $(".beatmapset-status--show").text() == "pending"){
+      $(".osu-layout__section.osu-layout__section--extra").prepend('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores osu-page osu-page--generic">Loading scores...</p>');
       var id_mode = window.location.hash.split("/");
       var mode = mode_number(id_mode[0].substr(1))
       var beatmap_id = id_mode[1];
-      console.log("retrieving scores for", beatmap_id, mode);
       return_scores(beatmap_id, mode, false, function(scores){
         if(scores.length > 0){
           var insert_html =
-            '<div>'
+            '<div class="osu-page osu-page--generic">'
+          + '<div class="beatmapset-scoreboard">'
+          + '<div class="page-tabs">'
+          + '<div class="page-tabs__tab ' + (tab == "all" ? "page-tabs__tab--active" : "") + '">Global Ranking</div>'
+          + '<div class="page-tabs__tab ' + (tab == "country" ? "page-tabs__tab--active" : "") + '">Country Ranking</div>'
+          + '<div class="page-tabs__tab ' + (tab == "friend" ? "page-tabs__tab--active" : "") + '">Friend Ranking</div>'
+          + '</div>'
+          + '<div class="beatmapset-scoreboard__main">'
+          + '<div>'
           + '<div class="beatmap-scoreboard-top">';
           insert_html += top_item(scores[0], mode);
           var own_score = false;
@@ -659,51 +666,52 @@ function new_leaderboard(){
             '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--miss">Miss</th>'
           + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--pp">pp</th>'
           + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--mods">Mods</th>'
+          + '<th class="beatmap-scoreboard-table__header beatmap-scoreboard-table__header--play-detail-menu"></th>'
           + '</tr>'
           + '</thead>'
           + '<tbody class="beatmap-scoreboard-table__body">';
 
           scores.forEach(function(score, index){
             insert_html +=
-              '<tr class="beatmap-scoreboard-table__body-row beatmap-scoreboard-table__body-row--first ';
+              '<tr class="beatmap-scoreboard-table__body-row beatmap-scoreboard-table__body-row--highlightable beatmap-scoreboard-table__body-row--first ';
             if(score.player_id == currentUser.id) insert_html += 'beatmap-scoreboard-table__body-row--self';
             if(friends_array.includes(score.player_id)) insert_html += 'beatmap-scoreboard-table__body-row--friend';
 
             insert_html +=
               '">'
-            + '<td class="beatmap-scoreboard-table__rank">#' + (index + 1) + '</td>'
-            + '<td class="beatmap-scoreboard-table__grade">'
+            + '<td class="beatmap-scoreboard-table__cell beatmap-scoreboard-table__rank">#' + (index + 1) + '</td>'
+            + '<td class="beatmap-scoreboard-table__cell beatmap-scoreboard-table__grade">'
             + '<div class="badge-rank badge-rank--tiny badge-rank--' + score.grade + '"></div>'
             + '</td>'
-            + '<td class="beatmap-scoreboard-table__score">' + score.score.toLocaleString() + '</td>'
-            + '<td class="' + perfect_class(score.accuracy) + '">' + score.accuracy.toFixed(2) + '%</td>'
-            + '<td><a href="/rankings/osu/performance?country=' + score.flag + '"><span class="flag-country flag-country--scoreboard flag-country--small-box" title="'
+            + '<td class="beatmap-scoreboard-table__cell beatmap-scoreboard-table__score">' + score.score.toLocaleString() + '</td>'
+            + '<td class="beatmap-scoreboard-table__cell ' + perfect_class(score.accuracy) + '">' + score.accuracy.toFixed(2) + '%</td>'
+            + '<td class="beatmap-scoreboard-table__cell"><a href="/rankings/osu/performance?country=' + score.flag + '"><span class="flag-country flag-country--scoreboard flag-country--small-box" title="'
             + score.flag + '" style="background-image: url(/images/flags/' + score.flag + '.png);"></span></a></td>'
-            + '<td><a class="beatmap-scoreboard-table__user-link js-usercard" data-user-id="' + score.player_id + '" href="/users/' + score.player_id + '">' + score.player + '</a></td>'
-            + '<td class="' + perfect_class(score.fc) + '">' + score.combo + '</td>';
+            + '<td class="beatmap-scoreboard-table__cell"><a class="beatmap-scoreboard-table__user-link js-usercard" data-user-id="' + score.player_id + '" href="/users/' + score.player_id + '">' + score.player + '</a></td>'
+            + '<td class="beatmap-scoreboard-table__cell ' + perfect_class(score.fc) + '">' + score.combo + '</td>';
 
             if(mode == 0 || mode == 2){
               insert_html +=
-                '<td class="' + zero_class(score.n300) + '">' + score.n300 + '</td>'
-              + '<td class="' + zero_class(score.n100) + '">' + score.n100 + '</td>'
-              + '<td class="' + zero_class(score.n50) + '">' + score.n50 + '</td>'
+                '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n300) + '">' + score.n300 + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n100) + '">' + score.n100 + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n50) + '">' + score.n50 + '</td>'
             }else if(mode == 1){
               insert_html +=
-                '<td class="' + zero_class(score.n300) + '">' + score.n300 + '</td>'
-              + '<td class="' + zero_class(score.n100) + '">' + score.n100 + '</td>'
+                '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n300) + '">' + score.n300 + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n100) + '">' + score.n100 + '</td>'
             }else if(mode == 3){
               insert_html +=
-                '<td class="' + zero_class(score.ngeki) + '">' + score.ngeki + '</td>'
-              + '<td class="' + zero_class(score.n300) + '">' + score.n300 + '</td>'
-              + '<td class="' + zero_class(score.nkatu) + '">' + score.nkatu + '</td>'
-              + '<td class="' + zero_class(score.n100) + '">' + score.n100 + '</td>'
-              + '<td class="' + zero_class(score.n50) + '">' + score.n50 + '</td>';
+                '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.ngeki) + '">' + score.ngeki + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n300) + '">' + score.n300 + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.nkatu) + '">' + score.nkatu + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n100) + '">' + score.n100 + '</td>'
+              + '<td class="beatmap-scoreboard-table__cell ' + zero_class(score.n50) + '">' + score.n50 + '</td>';
             }
 
             insert_html +=
-              '<td class="' + zero_class(score.nmiss) + '">' + score.nmiss + '</td>'
-            + '<td>' + Math.round(score.pp) + '</td>'
-            + '<td class="beatmap-scoreboard-table__mods">'
+              '<td class="beatmap-scoreboard-table__cell' + zero_class(score.nmiss) + '">' + score.nmiss + '</td>'
+            + '<td class="beatmap-scoreboard-table__cell">' + Math.round(score.pp) + '</td>'
+            + '<td class="beatmap-scoreboard-table__cell beatmap-scoreboard-table__mods">'
             + '<div class="mods mods--scoreboard">';
             score.mods_array.forEach(function(mod){
               insert_html +=
@@ -716,6 +724,7 @@ function new_leaderboard(){
             insert_html +=
               '</div>'
             + '</td>'
+            + '<td class="beatmap-scoreboard-table__play-detail-menu"></td>'
             + '</tr>';
           });
           insert_html +=
@@ -724,9 +733,12 @@ function new_leaderboard(){
 
           insert_html +=
             '</div>';
-          $(".beatmapset-scoreboard__main").html(insert_html);
+          $(".osu-layout__section.osu-layout__section--extra .osu-page.osu-page--generic").remove();
+          $(".osu-layout__section.osu-layout__section--extra").prepend(insert_html);
+          $(".beatmapset-scoreboard__notice--no-scores").remove();
         }else{
-          $(".beatmapset-scoreboard__main").html('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores">No scores yet. Maybe you should try setting some?</p>');
+            $(".beatmapset-scoreboard__notice--no-scores").remove();
+          $(".osu-layout__section.osu-layout__section--extra").prepend('<p class="beatmapset-scoreboard__notice beatmapset-scoreboard__notice--no-scores osu-page osu-page--generic">No scores yet. Maybe you should try setting some?</p>');
         }
       });
     }
@@ -735,7 +747,6 @@ function new_leaderboard(){
 
 function page_change(){
   if(xhr) xhr.abort();
-  console.log("[Unnoticed] page change", window.location.pathname);
   if(window.location.pathname.startsWith("/s/") || window.location.pathname.startsWith("/b/")
   || window.location.pathname.startsWith("/p/beatmap")){
     if($(".beatmapTab").length > 0 && $("h2:contains(Top 50 Scoreboard)").length === 0)
