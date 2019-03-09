@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	getUserIDEndpoint      = "/get_user_id/"
 	getScoreHashesEndpoint = "/get_score_hashes/"
 	putScoresEndpoint      = "/put_scores/"
 )
@@ -22,12 +23,6 @@ var (
 	httpClient   = http.Client{Timeout: time.Minute}
 	ErrBadStatus = errors.New("non-200 response")
 )
-
-// GetScoreHashesResp is the response from the get_score_hashes endpoint.
-type GetScoreHashesResp struct {
-	UserID int      `json:"user_id"`
-	Scores []string `json:"scores"`
-}
 
 // checkReadResp checks a response's success and returns its body.
 func checkReadResp(r *http.Response) ([]byte, error) {
@@ -49,8 +44,24 @@ func checkReadResp(r *http.Response) ([]byte, error) {
 	return b, nil
 }
 
+// getUserID gets a player's user ID from their username.
+func getUserID(db *DB) (int, error) {
+	log.Println("GET:", getUserIDEndpoint+db.Osu.PlayerName)
+	r, err := httpClient.Get(apiURL + getUserIDEndpoint + db.Osu.PlayerName)
+	if err != nil {
+		return 0, err
+	}
+
+	b, err := checkReadResp(r)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.Atoi(string(b))
+}
+
 // getScoreHashes gets a list of all scores that are already stored.
-func getScoreHashes(db DB) (GetScoreHashesResp, error) {
+func getScoreHashes(db DB) ([]string, error) {
 	log.Println("GET:", getScoreHashesEndpoint+db.Osu.PlayerName)
 	r, err := httpClient.Get(apiURL + getScoreHashesEndpoint + db.Osu.PlayerName)
 	if err != nil {

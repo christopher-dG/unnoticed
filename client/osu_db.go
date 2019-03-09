@@ -80,9 +80,11 @@ func NewOsuDB(path string) (*OsuDB, error) {
 // OsuDBBeatmap is a beatmap found in osu!.db.
 // We're skipping just about everything here, but we'll fill it in server side.
 type OsuDBBeatmap struct {
-	MD5       string `json:"file_md5"`
-	BeatmapID uint32 `json:"beatmap_id"`
-	Status    byte   `json:"-"`
+	MD5       string
+	BeatmapID uint32
+	OsuFile   string
+	Status    byte
+	Folder    string
 }
 
 // Unranked returns whether or not the beatmap is unranked.
@@ -113,12 +115,9 @@ func parseOsuDBBeatmap(r io.ReadSeeker) (b OsuDBBeatmap, err error) {
 	if b.MD5, err = readString(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
-
-	// Skipping: .osu file name.
-	if err = skipString(r); err != nil {
+	if b.OsuFile, err = readString(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
-
 	if b.Status, err = readByte(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
@@ -155,6 +154,30 @@ func parseOsuDBBeatmap(r io.ReadSeeker) (b OsuDBBeatmap, err error) {
 	}
 
 	if b.BeatmapID, err = readInt(r); err != nil {
+		return OsuDBBeatmap{}, err
+	}
+
+	// Skipping: Beatmapset ID, thread ID, Standard/Taiko/Catch/Mania grades, local offset,
+	// stack leniency, mode, source, tags, online offset, font, unplayed, last play, OSZ2.
+	if _, err = r.Seek(SizeInt+SizeInt+SizeByte+SizeByte+SizeByte+SizeByte+SizeShort+SizeSingle+SizeByte, io.SeekCurrent); err != nil {
+		return OsuDBBeatmap{}, err
+	}
+	for i := 0; i < 2; i++ {
+		if err = skipString(r); err != nil {
+			return OsuDBBeatmap{}, err
+		}
+	}
+	if _, err = r.Seek(SizeShort, io.SeekCurrent); err != nil {
+		return OsuDBBeatmap{}, err
+	}
+	if err = skipString(r); err != nil {
+		return OsuDBBeatmap{}, err
+	}
+	if _, err = r.Seek(SizeBool+SizeLong+SizeBool, io.SeekStart); err != nil {
+		return OsuDBBeatmap{}, err
+	}
+
+	if b.Folder, err = readString(r); err != nil {
 		return OsuDBBeatmap{}, err
 	}
 
